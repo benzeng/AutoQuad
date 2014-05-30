@@ -16,7 +16,8 @@
     Copyright © 2011, 2012, 2013  Bill Nesbitt
 */
 /*
-    For PX4/Pixhawk hardware
+    For PX4/Pixhawk hardware. many works need to do. 
+    Copyright 2014 BenZeng
 */
 
 #include "aq.h"
