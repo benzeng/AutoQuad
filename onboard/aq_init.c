@@ -15,6 +15,9 @@
 
     Copyright © 2011, 2012, 2013  Bill Nesbitt
 */
+/*
+    For PX4/Pixhawk hardware
+*/
 
 #include "aq.h"
 #include "aq_init.h"
