@@ -70,13 +70,19 @@ void aqInit(void *pdata) {
     sdioLowLevelInit();
     filerInit();
     supervisorInit();
+
+
+    
+
+/* Ben: For Debug
+
     configInit();
     commInit();
 #ifdef USE_MAVLINK
     mavlinkInit();
 #endif
     telemetryInit();
-    imuInit();
+    //imuInit();    // Ben: For Debug
     analogInit();
     navUkfInit();
     radioInit();
@@ -112,7 +118,7 @@ void aqInit(void *pdata) {
 
     // start telemetry
     telemetryEnable();
-
+*/
     // reset idle loop calibration now that everything is running
     minCycles = 999999999;
 

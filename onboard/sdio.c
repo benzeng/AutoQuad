@@ -1040,6 +1040,7 @@ void sdioLowLevelInit(void) {
     // Enable the SDIO APB2 Clock
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SDIO, ENABLE);
 
+// Ben: FIXed
 #ifdef SDIO_POWER_PORT
     // turn off SDIO power supply
     sdioData.sdEnable = digitalInit(SDIO_POWER_PORT, SDIO_POWER_PIN);
@@ -1087,6 +1088,7 @@ void sdioLowLevelInit(void) {
 
     if (SD_DetectLowLevel() == SD_NOT_PRESENT)
 	sdioData.cardRemovalMicros = timerMicros();
+// Ben: FIXed
 #ifdef SDIO_POWER_PORT
     else
 	digitalHi(sdioData.sdEnable);
@@ -1872,14 +1874,29 @@ DWORD get_fattime(void) {
 }
 
 DSTATUS disk_initialize(BYTE drv) {
+    static u32 nCount = 0;
+
     if (drv)
 	return STA_NOINIT;	// Supports only single drive
 
     if (SD_DetectLowLevel() == SD_NOT_PRESENT)
 	return STA_NOINIT;	// No card in the socket
 
-    if (sdioInit() != SD_OK)
+    if (sdioInit() != SD_OK){
+        // Ben +
+        if( nCount++ % 2 == 0 ){
+            digitalLo(sdioData.sdEnable);
+        }
+        else
+            digitalHi(sdioData.sdEnable);
+        yield(1000);
+        // Ben end
+
 	return STA_NOINIT;
+    }
+    // Ben +
+    digitalHi(sdioData.sdEnable);
+    // Ben end
 
     sdioData.initialized = 1;
 

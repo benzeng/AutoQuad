@@ -19,6 +19,24 @@
 #ifndef _board_h
 #define _board_h
 
+/** 
+  * @brief  SD FLASH SDIO Interface 
+  */   
+  
+//#define SD_DETECT_PIN                    GPIO_Pin_11                 /* PF.11 */  
+//#define SD_DETECT_GPIO_PORT              GPIOF                       /* GPIOF */  
+//#define SD_DETECT_GPIO_CLK               RCC_APB2Periph_GPIOF  
+  
+//#define SDIO_FIFO_ADDRESS                ((uint32_t)0x40018080)  
+/**  
+  * @brief  SDIO Intialization Frequency (400KHz max) 
+  */  
+//#define SDIO_INIT_CLK_DIV                ((uint8_t)0xB2)  
+/**  
+  * @brief  SDIO Data Transfer Frequency (25MHz max)  
+  */  
+//#define SDIO_TRANSFER_CLK_DIV            ((uint8_t)0x00)   
+
 #define SDIO_DMA			DMA2
 #define SDIO_DMA_STREAM			DMA2_Stream3
 #define SDIO_DMA_CHANNEL		DMA_Channel_4
@@ -29,12 +47,21 @@
 #define SDIO_DMA_FLAG_TCIF		DMA_FLAG_TCIF3
 #define SDIO_DMA_IRQHANDLER		DMA2_Stream3_IRQHandler
 #define SDIO_DMA_IRQn			DMA2_Stream3_IRQn
-#define SDIO_POWER_PORT			GPIOC
-#define SDIO_POWER_PIN			GPIO_Pin_14
-#define SDIO_DETECT_GPIO_PORT		GPIOC
-#define SDIO_DETECT_PIN			GPIO_Pin_13
-#define SDIO_DETECT_PORT_SOURCE		EXTI_PortSourceGPIOC
-#define SDIO_DETECT_PIN_SOURCE		EXTI_PinSource13
+
+
+// Ben: From PX4FMU, we found:
+//c:\px4\APM\px4\px4firmware\src\drivers\boards\px4fmu-v2\board_config.h
+//#define GPIO_LED1		(GPIO_OUTPUT|GPIO_OPENDRAIN|GPIO_SPEED_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTE|GPIO_PIN12)
+// 
+// So Fixed:
+#define SDIO_POWER_PORT			GPIOE                 // Ben fix: GPIOC
+#define SDIO_POWER_PIN			GPIO_Pin_12           // Ben fix: GPIO_Pin_14
+
+#define SDIO_DETECT_GPIO_PORT		GPIOF                 // Ben fix: GPIOC
+#define SDIO_DETECT_PIN			GPIO_Pin_11           // Ben fix: GPIO_Pin_13
+#define SDIO_DETECT_PORT_SOURCE		EXTI_PortSourceGPIOF  // Ben fix: EXTI_PortSourceGPIOC
+#define SDIO_DETECT_PIN_SOURCE		EXTI_PinSource11      // Ben fix: EXTI_PinSource13
+
 #define SDIO_DETECT_IRQ			EXTI15_10_IRQn
 #define SDIO_DETECT_HANDLER		EXTI15_10_IRQHandler
 #define SDIO_DETECT_EXTI_LINE		EXTI_Line13

@@ -338,9 +338,12 @@ void adcInit(void) {
     digitalLo(adcData.rateAutoZero);
 //    delay(20);
 
+     
+    // Ben: This IO used as PX4FMU back end LED.
     // bring ACC's SELF TEST line low
     adcData.accST = digitalInit(GPIOE, GPIO_Pin_12);
     digitalLo(adcData.accST);
+
 
     // bring ACC's SCALE line low (ADXL3X5 requires this line be tied to GND or left floating)
     adcData.accScale = digitalInit(GPIOC, GPIO_Pin_15);
