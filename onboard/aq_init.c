@@ -47,6 +47,10 @@
 #include "can.h"
 #include "analog.h"
 #include "canCalib.h"
+#ifdef PX4FMU
+#include "rgb_led.h" 
+#endif
+
 #ifdef USE_SIGNALING
    #include "signaling.h"
 #endif
@@ -67,16 +71,17 @@ void aqInit(void *pdata) {
 #endif
     rtcInit();	    // have to do this first as it requires our microsecond timer to calibrate
     timerInit();    // now setup the microsecond timer before everything else
+
+#ifdef PX4FMU
+    rgbledInit();
+#endif
+
     sdioLowLevelInit();
     filerInit();
     supervisorInit();
-
-
-    
-
-/* Ben: For Debug
-
     configInit();
+
+/*
     commInit();
 #ifdef USE_MAVLINK
     mavlinkInit();

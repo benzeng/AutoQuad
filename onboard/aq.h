@@ -15,6 +15,10 @@
 
     Copyright © 2011, 2012, 2013  Bill Nesbitt
 */
+/*
+    Port to PX4/Pixhawk hardware.
+    Copyright 2014 BenZeng
+*/
 
 // NOTE: These parameters must be passed to GCC:
 //
@@ -23,6 +27,9 @@
 
 #ifndef _aq_h
 #define _aq_h
+
+// Ben: Port AQ to PX4FMU
+#define PX4FMU
 
 #define USE_MAVLINK
 

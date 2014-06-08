@@ -1040,7 +1040,6 @@ void sdioLowLevelInit(void) {
     // Enable the SDIO APB2 Clock
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SDIO, ENABLE);
 
-// Ben: FIXed
 #ifdef SDIO_POWER_PORT
     // turn off SDIO power supply
     sdioData.sdEnable = digitalInit(SDIO_POWER_PORT, SDIO_POWER_PIN);
@@ -1088,7 +1087,6 @@ void sdioLowLevelInit(void) {
 
     if (SD_DetectLowLevel() == SD_NOT_PRESENT)
 	sdioData.cardRemovalMicros = timerMicros();
-// Ben: FIXed
 #ifdef SDIO_POWER_PORT
     else
 	digitalHi(sdioData.sdEnable);
@@ -1873,6 +1871,7 @@ DWORD get_fattime(void) {
     return rtcGetDateTime();
 }
 
+
 DSTATUS disk_initialize(BYTE drv) {
     static u32 nCount = 0;
 
@@ -1883,20 +1882,21 @@ DSTATUS disk_initialize(BYTE drv) {
 	return STA_NOINIT;	// No card in the socket
 
     if (sdioInit() != SD_OK){
-        // Ben +
+#ifdef PX4FMU
         if( nCount++ % 2 == 0 ){
             digitalLo(sdioData.sdEnable);
         }
         else
             digitalHi(sdioData.sdEnable);
-        yield(1000);
-        // Ben end
+        yield(500);
+#endif
 
 	return STA_NOINIT;
     }
-    // Ben +
+
+#ifdef PX4FMU
     digitalHi(sdioData.sdEnable);
-    // Ben end
+#endif
 
     sdioData.initialized = 1;
 

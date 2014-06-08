@@ -24,8 +24,6 @@
 #include "motors.h"
 #include "util.h"
 
-// For Debug
-#include "digital.h"
 
 #include <CoOS.h>
 
@@ -60,11 +58,6 @@ void CoIdleTask(void* pdata) {
     *SCB_DEMCR = *SCB_DEMCR | 0x01000000;
     *DWT_CONTROL = *DWT_CONTROL | 1; // enable the counter
 
-    // Debug start
-    //digitalPin *boardLed = digitalInit(GPIOE, GPIO_Pin_12);
-    //digitalLo(boardLed);
-    // Debug End
-
     while (1) {
 #ifdef UTIL_STACK_CHECK
 	utilStackCheck();
@@ -72,18 +65,6 @@ void CoIdleTask(void* pdata) {
 	AQ_256_NOPS;
 #endif
 	counter++;
-
-        // Debug start
-        /*
-        if( (counter % 100) == 0 ){
-            digitalLo(boardLed);
-        }
-        else if( (counter % 10001) == 0 ){
-            digitalHi(boardLed);
-            delay(200);
-        }
-        */
-        // End Debug
 
 	thisCycles = *DWT_CYCCNT;
 	cycles = thisCycles - lastCycles;

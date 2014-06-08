@@ -22,6 +22,10 @@
 #include "digital.h"
 #include "diskio.h"
 
+// Ben:
+// #define SDIO    ((SDIO_TypeDef *) SDIO_BASE)
+// OFFSETOF(SDIO->FIFO) is 0x40012c80
+//
 #define SDIO_FIFO_ADDRESS                ((uint32_t)0x40012c80)
 #define SDIO_INIT_CLK_DIV                ((uint8_t)0xB2)	// SDIO Intialization Frequency (400KHz max)
 
