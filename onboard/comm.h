@@ -63,6 +63,10 @@ enum commStreamTypes {
     COMM_TYPE_OMAP_CONSOLE  = (1<<6),
     COMM_TYPE_OMAP_PPP	    = (1<<7)
 };
+#ifdef PX4FMU
+// Reuse this type for communication with PX4IO board
+#define COMM_TYPE_PX4IO COMM_TYPE_MULTIPLEX
+#endif
 
 enum commTxBufferStatus {
     COMM_TX_BUF_FREE	    = 0,

@@ -81,13 +81,17 @@ void aqInit(void *pdata) {
     supervisorInit();
     configInit();
 
-/*
     commInit();
 #ifdef USE_MAVLINK
     mavlinkInit();
 #endif
     telemetryInit();
-    //imuInit();    // Ben: For Debug
+
+    extern void eepromTest( void );
+    eepromTest();
+
+    //imuInit();    
+/*
     analogInit();
     navUkfInit();
     radioInit();

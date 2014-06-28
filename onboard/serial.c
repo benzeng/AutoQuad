@@ -192,7 +192,11 @@ serialPort_t *serialUSART2(unsigned int flowControl, unsigned int rxBufSize, uns
     s = serialPort2 = (serialPort_t *)aqCalloc(1, sizeof(serialPort_t));
 
     GPIO_StructInit(&GPIO_InitStructure);
+#ifdef PX4FMU
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+#else
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+#endif
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -277,7 +281,11 @@ serialPort_t *serialUSART3(unsigned int flowControl, unsigned int rxBufSize, uns
     s = serialPort3 = (serialPort_t *)aqCalloc(1, sizeof(serialPort_t));
 
     GPIO_StructInit(&GPIO_InitStructure);
+#ifdef PX4FMU
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+#else
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+#endif
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -362,7 +370,11 @@ serialPort_t *serialUSART4(unsigned int flowControl, unsigned int rxBufSize, uns
     s = serialPort4 = (serialPort_t *)aqCalloc(1, sizeof(serialPort_t));
 
     GPIO_StructInit(&GPIO_InitStructure);
+#ifdef PX4FMU
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+#else
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+#endif
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -510,7 +522,11 @@ serialPort_t *serialUSART6(unsigned int flowControl, unsigned int rxBufSize, uns
     s = serialPort6 = (serialPort_t *)aqCalloc(1, sizeof(serialPort_t));
 
     GPIO_StructInit(&GPIO_InitStructure);
+#ifdef PX4FMU
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+#else
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+#endif
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -586,6 +602,96 @@ serialPort_t *serialUSART6(unsigned int flowControl, unsigned int rxBufSize, uns
 }
 #endif
 
+#ifdef PX4FMU
+
+#ifdef SERIAL_UART7_PORT
+serialPort_t *serialUSART7(unsigned int flowControl, unsigned int rxBufSize, unsigned int txBufSize) {
+    GPIO_InitTypeDef GPIO_InitStructure;
+    NVIC_InitTypeDef NVIC_InitStructure;
+    serialPort_t *s;
+
+    s = serialPort6 = (serialPort_t *)aqCalloc(1, sizeof(serialPort_t));
+
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+
+    // Enable UART7 clock
+    RCC_APB2PeriphClockCmd( RCC_APB1Periph_UART7, ENABLE);
+
+#ifdef SERIAL_UART7_RX_PIN
+    s->rxBufSize = (rxBufSize) ? rxBufSize : SERIAL_DEFAULT_RX_BUFSIZE;
+    s->rxBuf = (volatile unsigned char*)aqCalloc(1, s->rxBufSize);
+
+    GPIO_PinAFConfig(SERIAL_UART6_PORT, SERIAL_UART6_RX_SOURCE, GPIO_AF_USART6);
+
+    GPIO_InitStructure.GPIO_Pin = SERIAL_UART6_RX_PIN;
+    GPIO_Init(SERIAL_UART6_PORT, &GPIO_InitStructure);
+
+#ifdef SERIAL_UART7_RX_DMA_ST
+    s->rxDMAStream = SERIAL_UART7_RX_DMA_ST;
+    s->rxDMAChannel = SERIAL_UART7_RX_DMA_CH;
+    s->rxDmaFlags = SERIAL_UART7_RX_TC_FLAG | SERIAL_UART7_RX_HT_FLAG | SERIAL_UART7_RX_TE_FLAG | SERIAL_UART7_RX_DM_FLAG | SERIAL_UART7_RX_FE_FLAG;
+#else
+    // otherwise use interrupts
+    NVIC_InitStructure.NVIC_IRQChannel = UART7_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+#endif	// SERIAL_UART7_RX_DMA_ST
+#endif	// SERIAL_UART7_RX_PIN
+
+#ifdef SERIAL_UART7_TX_PIN
+    s->txBufSize = txBufSize;
+    s->txBuf = (volatile unsigned char*)aqCalloc(1, s->txBufSize);
+
+    GPIO_PinAFConfig(SERIAL_UART7_PORT, SERIAL_UART7_TX_SOURCE, GPIO_AF_UART7);
+
+    GPIO_InitStructure.GPIO_Pin = SERIAL_UART7_TX_PIN;
+    GPIO_Init(SERIAL_UART7_PORT, &GPIO_InitStructure);
+
+#ifdef SERIAL_UART7_TX_DMA_ST
+    s->txDMAStream = SERIAL_UART7_TX_DMA_ST;
+    s->txDMAChannel = SERIAL_UART7_TX_DMA_CH;
+    s->txDmaFlags = SERIAL_UART7_TX_TC_FLAG | SERIAL_UART7_TX_HT_FLAG | SERIAL_UART7_TX_TE_FLAG | SERIAL_UART7_TX_DM_FLAG | SERIAL_UART7_TX_FE_FLAG;
+
+    // Enable the DMA global Interrupt
+    NVIC_InitStructure.NVIC_IRQChannel = SERIAL_UART7_TX_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+#else
+    // otherwise use interrupts
+    NVIC_InitStructure.NVIC_IRQChannel = UART7_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+#endif	// SERIAL_UART7_TX_DMA_ST
+#endif	// SERIAL_UART7_TX_PIN
+
+#ifdef SERIAL_UART7_CTS_PIN
+    if (flowControl == USART_HardwareFlowControl_RTS_CTS) {
+	GPIO_PinAFConfig(SERIAL_UART7_PORT, SERIAL_UART7_RTS_SOURCE, GPIO_AF_USART6);
+	GPIO_PinAFConfig(SERIAL_UART7_PORT, SERIAL_UART7_CTS_SOURCE, GPIO_AF_USART6);
+
+	GPIO_InitStructure.GPIO_Pin = SERIAL_UART7_CTS_PIN | SERIAL_UART7_RTS_PIN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+	GPIO_Init(SERIAL_UART7_PORT, &GPIO_InitStructure);
+    }
+#endif	// SERIAL_UART7_CTS_PIN
+
+    return s;
+}
+
+#endif
+#endif
+
+
 serialPort_t *serialOpen(USART_TypeDef *USARTx, unsigned int baud, uint16_t flowControl, unsigned int rxBufSize, unsigned int txBufSize) {
     DMA_InitTypeDef DMA_InitStructure;
     serialPort_t *s = 0;
@@ -625,6 +731,14 @@ serialPort_t *serialOpen(USART_TypeDef *USARTx, unsigned int baud, uint16_t flow
     if (USARTx == USART6) {
 	s = serialUSART6(flowControl, rxBufSize, txBufSize);
     }
+#endif
+
+#ifdef PX4FMU
+#ifdef SERIAL_UART7_PORT
+    if (USARTx == UART7) {
+	s = serialUSART7(flowControl, rxBufSize, txBufSize);
+    }
+#endif
 #endif
 
     s->waitFlag = CoCreateFlag(0, 0);	// manual reset

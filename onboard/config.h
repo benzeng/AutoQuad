@@ -23,6 +23,10 @@
 
 #include "config_default.h"
 
+#ifdef PX4FMU
+//#define HAS_DIGITAL_IMU
+#endif
+
 #define CONFIG_FILE_NAME	    "params.txt"
 #define CONFIG_FILE_BUF_SIZE	    512
 #define CONFIG_LINE_BUF_SIZE	    128

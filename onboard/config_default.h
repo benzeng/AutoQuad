@@ -168,8 +168,12 @@
 #define DEFAULT_MOT_PWRD_16_R	    0.0
 #define DEFAULT_MOT_PWRD_16_Y	    0.0
 
-
+#ifdef PX4FMU
+#define DEFAULT_COMM_BAUD1	    57600
+#else
 #define DEFAULT_COMM_BAUD1	    115200
+#endif
+
 #define DEFAULT_COMM_BAUD2	    230400
 #define DEFAULT_COMM_BAUD3	    3000000
 #define DEFAULT_COMM_BAUD4	    460800

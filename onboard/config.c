@@ -757,6 +757,9 @@ unsigned char configFlashWrite(void) {
 void configInit(void) {
     float ver;
 
+#if 1
+    configLoadDefault();
+#else
     // start with what's in flash
     configFlashRead();
 
@@ -782,6 +785,7 @@ void configInit(void) {
     // if loaded version greater than flash version
     if (p[CONFIG_VERSION] > ver)
 	configFlashWrite();
+#endif
 }
 
 unsigned int configParameterRead(void *data) {

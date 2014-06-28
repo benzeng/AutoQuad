@@ -15,7 +15,7 @@
 
     Copyright © 2011, 2012, 2013  Bill Nesbitt
 */
-
+//#define HAS_DIGITAL_IMU
 #include "config.h"
 #ifdef HAS_DIGITAL_IMU
 #include "imu.h"

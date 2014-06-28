@@ -398,8 +398,15 @@ void commInit(void) {
 #else
     flowControl = USART_HardwareFlowControl_RTS_CTS;
 #endif
+
+#ifdef PX4FMU
+    commData.serialPorts[3] = serialOpen(COMM_PORT4, PX4IO_SERIAL_BITRATE, flowControl, COMM_RX_BUF_SIZE, 0);
+    commData.portStreams[3] = (uint8_t)COMM_TYPE_PX4IO;
+#else
     commData.serialPorts[3] = serialOpen(COMM_PORT4, p[COMM_BAUD4], flowControl, COMM_RX_BUF_SIZE, 0);
     commData.portStreams[3] = (uint8_t)p[COMM_STREAM_TYP4];
+#endif
+
 #endif
 
     // record which stream types that we are working with

@@ -15,14 +15,107 @@
 
     Copyright © 2011, 2012, 2013  Bill Nesbitt
 */
+/*
+    This file is part of AutoQuad For PX4FMU/PixHawk.
+    Implementate  functions IN: eeprom.c
+
+    Copyright © 2014  Ben Zeng
+
+*/
 
 #include "config.h"
+
+// For Debug
+#ifdef PX4FMU
+#define HAS_DIGITAL_IMU
+#endif
+
 #ifdef HAS_DIGITAL_IMU
 #include "eeprom.h"
 #include "util.h"
 #include <string.h>
 
 eepromStruct_t eepromData;
+
+#ifdef PX4FMU
+
+void eepromPreInit(void) {
+    eepromData.spi = spiClientInit(FM5V01_SPI, FM25V01_SPI_BAUD, FM5V01_SPI_CS_PORT, FM5V01_SPI_CS_PIN, &eepromData.spiFlag, 0);
+}
+
+void eepromWriteStatus(int8_t status) {
+    eepromData.buf.cmd = RAMTRON_WRSR;
+    *(uint8_t *)&eepromData.buf.addr = status;
+
+    eepromData.spiFlag = 0;
+    spiTransaction(eepromData.spi, &eepromData.buf, &eepromData.buf, 2);
+
+    while (!eepromData.spiFlag)
+	yield(1);
+
+    yield(5);
+}
+
+void eepromReadStatus(void) {
+    eepromData.buf.cmd = RAMTRON_RDSR;
+
+    eepromData.spiFlag = 0;
+    spiTransaction(eepromData.spi, &eepromData.buf, &eepromData.buf, 2);
+
+    while (!eepromData.spiFlag)
+	yield(1);
+
+    eepromData.status = *(uint8_t *)(&eepromData.buf.addr);
+}
+
+
+void eepromReadBlock(uint16_t address, int size) {
+    eepromData.buf.cmd = RAMTRON_READ;
+    eepromData.buf.addr[1] = (address&0xff);
+    eepromData.buf.addr[0] = (address>>8); // high byte first.
+
+    eepromData.spiFlag = 0;
+    spiTransaction(eepromData.spi, &eepromData.buf, &eepromData.buf, size+3);
+
+    while (!eepromData.spiFlag)
+	yield(1);
+
+//debug_printf("read %x, %x %c %c %c %c\n", address, size, eepromData.buf.data[0], eepromData.buf.data[1], eepromData.buf.data[2], eepromData.buf.data[3]);
+}
+
+
+void eepromWriteEnable(void) {
+    eepromData.buf.cmd = RAMTRON_WREN;
+
+    eepromData.spiFlag = 0;
+    spiTransaction(eepromData.spi, &eepromData.buf, &eepromData.buf, 1);
+
+    while (!eepromData.spiFlag)
+	yield(1);
+}
+
+void eepromWriteBlock(uint16_t address, int size) {
+    eepromWriteEnable();
+
+    eepromData.buf.cmd = RAMTRON_WRITE;
+    eepromData.buf.addr[1] = (address&0xff);
+    eepromData.buf.addr[0] = (address>>8); // high byte first.
+//debug_printf("write %x, %x %c %c %c %c\n", address, size, eepromData.buf.data[0], eepromData.buf.data[1], eepromData.buf.data[2], eepromData.buf.data[3]);
+    eepromData.spiFlag = 0;
+    spiTransaction(eepromData.spi, &eepromData.buf, &eepromData.buf, size+3);
+
+    while (!eepromData.spiFlag)
+	yield(1);
+
+    do {
+	yield(1);
+	eepromReadStatus();
+    } while (eepromData.status & RAMTRON_SR_WIP);
+}
+
+
+#else //*********** AQ
+
 
 void eepromPreInit(void) {
     eepromData.spi = spiClientInit(DIMU_EEPROM_SPI, DIMU_EEPROM_SPI_BAUD, DIMU_EEPROM_CS_PORT, DIMU_EEPROM_CS_PIN, &eepromData.spiFlag, 0);
@@ -95,6 +188,11 @@ void eepromWriteBlock(uint16_t address, int size) {
 	eepromReadStatus();
     } while (eepromData.status & 0b01);
 }
+
+#endif // #ifdef PX4FMU. 
+
+///////////////////////////////////////////////////////////////////////////////
+// The flowing code is public for AQ and PX4FMU
 
 void eepromChecksum(void *memory, int size) {
     uint8_t *p;
@@ -230,4 +328,41 @@ void eepromInit(void) {
     if (eepromReadHeader() == 0 || eepromData.header.version < EEPROM_VERSION)
 	eepromFormat();
 }
+
+void eepromTest( void )
+{
+    uint8_t *buf;
+    int size;
+    int i;
+    int n;
+
+    // Init
+    eepromPreInit();
+    eepromInit();
+    
+    // Write data into Flash RAM
+    buf = eepromOpenWrite();
+    for( i = 0; i < 3; i++ )
+    {
+	for( n = 0; n < DIMU_EEPROM_BLOCK_SIZE; n++ )
+	buf[n] = (char)n;
+        eepromWrite();
+    }
+    eepromClose();
+
+    // Read data from Flash RAM
+    buf = eepromOpenRead();
+    while ((size = eepromRead(DIMU_EEPROM_BLOCK_SIZE)) != 0)
+    {
+	for( n = 0; n < DIMU_EEPROM_BLOCK_SIZE; n++ )
+	{
+	    if( buf[n] != (char)n )
+	    {
+		//AQ_NOTICE("DIMU: EEPROM read/write tests failed\n");
+		break;
+	    }
+	}
+    }
+}
+
 #endif
