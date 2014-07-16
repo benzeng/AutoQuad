@@ -17,7 +17,7 @@
 */
 
 #include "config.h"
-#ifdef HAS_DIGITAL_IMU
+
 #include "imu.h"
 #include "hmc5983.h"
 #include "aq_timer.h"
@@ -28,6 +28,8 @@
 #endif
 
 hmc5983Struct_t hmc5983Data;
+
+#ifdef DIMU_HAVE_MPU6000
 
 static void hmc5983TransferComplete(int unused) {
     hmc5983Data.slot = (hmc5983Data.slot + 1) % HMC5983_SLOTS;

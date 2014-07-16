@@ -28,33 +28,31 @@ ms5611Struct_t ms5611Data;
 static uint32_t ms5611RxBuf;
 static uint32_t ms5611TxBuf;
 
+/* SPI protocol address bits */
+#define DIR_READ			(1<<7)
+#define DIR_WRITE			(0<<7)
+void spi1Transaction(spiClient_t *client, volatile void *rxBuf, void *txBuf, uint16_t size);
+
 static void ms5611SendCommand(uint8_t cmd) {
-    ((uint8_t *)&ms5611TxBuf)[0] = cmd;
+    ((uint8_t *)&ms5611TxBuf)[0] = cmd | DIR_WRITE;
     ms5611Data.spiFlag = 0;
-    spiTransaction(ms5611Data.spi, &ms5611RxBuf, &ms5611TxBuf, 1);
 
-    while (!ms5611Data.spiFlag)
-	;
+    // Deselect to ensure high to low transition of pin select
+    digitalHi(ms5611Data.spi->cs);
+
+    spi1Transaction(ms5611Data.spi, &ms5611RxBuf, &ms5611TxBuf, 1);
+
+    //spiReadBuffer(ms5611Data.spi, &ms5611RxBuf, &ms5611TxBuf, 1, 1);
+
+
+    if( cmd != 0x1e )
+    {
+	while (!ms5611Data.spiFlag)
+	   yield(1);
+    }
+
 }
 
-static uint32_t ms5611Read(uint8_t reg, uint8_t n) {
-    uint32_t val;
-    int i;
-
-    ((uint8_t *)&ms5611TxBuf)[0] = reg;
-
-    ms5611Data.spiFlag = 0;
-    spiTransaction(ms5611Data.spi, &ms5611RxBuf, &ms5611TxBuf, n+1);
-
-    while (!ms5611Data.spiFlag)
-	;
-
-    val = 0;
-    for (i = 0; i < n; i++)
-	val = (val<<8) | ((uint8_t *)&ms5611RxBuf)[1+i];
-
-    return val;
-}
 
 void ms5611InitialBias(void) {
     uint32_t lastUpdate = ms5611Data.lastUpdate;
@@ -185,7 +183,22 @@ void ms5611Disable(void) {
 }
 
 void ms5611PreInit(void) {
+#ifdef PX4FMU
+    static spiClient_t *spiLSM303D;
+    static spiClient_t *spiL3GD20;
+    static volatile uint32_t spiDummyFlag = 0;
+    ms5611Data.spi = spiClientInit(PX4_SENSORS_SPI, MS5611_SPI_BAUD, PX4_BARO_SPI_CS_PORT, PX4_BARO_SPI_CS_PIN, &ms5611Data.spiFlag, 0);
+    spiLSM303D = spiClientInit(PX4_SENSORS_SPI, MS5611_SPI_BAUD, PX4_ACCEL_MAG_SPI_CS_PORT, PX4_ACCEL_MAG_SPI_CS_PIN, &spiDummyFlag, 0);
+    spiL3GD20 = spiClientInit(PX4_SENSORS_SPI, MS5611_SPI_BAUD, PX4_GYRO_SPI_CS_PORT, PX4_GYRO_SPI_CS_PIN, &spiDummyFlag, 0);
+
+    // Deselect GYO, ACCEL/MAG
+    digitalHi(spiLSM303D->cs);
+    digitalHi(spiL3GD20->cs);
+#else
+
     ms5611Data.spi = spiClientInit(DIMU_MS5611_SPI, MS5611_SPI_BAUD, DIMU_MS5611_CS_PORT, DIMU_MS5611_CS_PIN, &ms5611Data.spiFlag, 0);
+
+#endif
 }
 
 // code from MS's AN520
@@ -219,12 +232,37 @@ static uint8_t ms5611CheckSum(void) {
     return (n_rem ^ 0x00);
 }
 
+
+// read PROM contents
+static uint32_t ms5611Read(uint8_t reg, uint8_t n) {
+    uint32_t val;
+    int i;
+
+    ((uint8_t *)&ms5611TxBuf)[0] = reg | DIR_READ;
+
+    ms5611Data.spiFlag = 0;
+    spi1Transaction(ms5611Data.spi, &ms5611RxBuf, &ms5611TxBuf, n+1);
+
+    //spiReadBuffer(ms5611Data.spi, &ms5611RxBuf, &ms5611TxBuf, n, 1);
+
+    while (!ms5611Data.spiFlag)
+	yield(1);
+
+    val = 0;
+    for (i = 0; i < n; i++)
+	val = (val<<8) | ((uint8_t *)&ms5611RxBuf)[1+i];
+
+    return val;
+}
+
+
 uint8_t ms5611Init(void) {
     int i, j;
 
     utilFilterInit(&ms5611Data.tempFilter, (1.0f / 13.0f), DIMU_TEMP_TAU, IMU_ROOM_TEMP);
 
     j = MS5611_RETRIES;
+    spiChangeCallback(ms5611Data.spi, ms5611Callback);
     do {
 	// reset
 	ms5611SendCommand(0x1e);
@@ -232,7 +270,8 @@ uint8_t ms5611Init(void) {
 
 	// read coefficients
 	for (i = 0; i < 8; i++) {
-	    while (ms5611Data.p[i] == 0x0000 || ms5611Data.p[i] == 0xffff) {
+	    //while (ms5611Data.p[i] == 0x0000 || ms5611Data.p[i] == 0xffff) 
+	    {
 		ms5611Data.p[i] = ms5611Read(0xa0 + i*2, 2);
 		delay(1);
 	    }
@@ -241,14 +280,14 @@ uint8_t ms5611Init(void) {
     while (--j && ms5611CheckSum() != (ms5611Data.p[7] & 0x000f));
 
     if (j > 0) {
-      ms5611Data.adcRead = 0x00;
+      ms5611Data.adcRead = 0x00 | DIR_WRITE;
 
   //    ms5611Data.startTempConv = 0x58;    // 4096 OSR
-      ms5611Data.startTempConv = 0x50;    // 256 OSR
-      ms5611Data.startPresConv = 0x48;	// 4096 OSR
+      ms5611Data.startTempConv = 0x50 | DIR_WRITE;    // 256 OSR
+      ms5611Data.startPresConv = 0x48 | DIR_WRITE;	// 4096 OSR
   //    ms5611Data.startPresConv = 0x40;	// 256 OSR
 
-      spiChangeCallback(ms5611Data.spi, ms5611Callback);
+      //spiChangeCallback(ms5611Data.spi, ms5611Callback);
 
       ms5611Data.initialized = 1;
     }

@@ -21,11 +21,23 @@
 
 #include "aq.h"
 
+#ifdef PX4FMU
+#if BOARD_VERSION == 6 && defined DIMU_VERSION
+    #if DIMU_VERSION == 10
+	#include "board_dimu_v1.h"
+    #elif DIMU_VERSION == 11
+	#include "board_dimu_v1_1.h"
+    #elif DIMU_VERSION == 20
+	#include "board_dimu_v2.h"
+    #else
+	#error "Unknown DIMU_VERSION for BOARD_VERSION == 6"
+    #endif
+#endif
+#endif
+
 #include "config_default.h"
 
-#ifdef PX4FMU
-//#define HAS_DIGITAL_IMU
-#endif
+
 
 #define CONFIG_FILE_NAME	    "params.txt"
 #define CONFIG_FILE_BUF_SIZE	    512

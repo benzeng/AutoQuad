@@ -17,7 +17,7 @@
 */
 //#define HAS_DIGITAL_IMU
 #include "config.h"
-#ifdef HAS_DIGITAL_IMU
+
 #include "imu.h"
 #include "mpu6000.h"
 #include "aq_timer.h"
@@ -28,6 +28,8 @@
 #endif
 
 mpu6000Struct_t mpu6000Data;
+
+#ifdef DIMU_HAVE_MPU6000
 
 static void mpu6000TransferComplete(int unused) {
     mpu6000Data.slot = (mpu6000Data.slot + 1) % MPU6000_SLOTS;

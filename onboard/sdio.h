@@ -27,7 +27,13 @@
 // OFFSETOF(SDIO->FIFO) is 0x40012c80
 //
 #define SDIO_FIFO_ADDRESS                ((uint32_t)0x40012c80)
-#define SDIO_INIT_CLK_DIV                ((uint8_t)0xB2)	// SDIO Intialization Frequency (400KHz max)
+
+#define PX4FMU
+#ifdef PX4FMU
+#define SDIO_INIT_CLK_DIV                ((uint8_t)0x76)
+#else
+#define SDIO_INIT_CLK_DIV                ((uint8_t)0x76)	// 0xB2 SDIO Intialization Frequency (400KHz max)
+#endif
 
 #define SDIO_RETRIES			3
 

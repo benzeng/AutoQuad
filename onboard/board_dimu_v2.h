@@ -22,7 +22,18 @@
 #define HAS_DIGITAL_IMU
 #define USE_DIGITAL_IMU
 
-#define DIMU_HAVE_EEPROM
+//#define DIMU_HAVE_EEPROM
+
+#ifdef PX4FMU
+
+#define DIMU_HAVE_L3GD20           // GYO
+#define DIMU_HAVE_LSM303D          // ACC & MAG
+#define DIMU_HAVE_MS5611           // PRESSURE
+
+#define LSM303D_ACC_SCALE           8     // g      (2, 4, 8, 16)
+#define L3GD20_GYO_SCALE           1000  // deg/s  (250, 500, 1000, 2000)
+
+#else
 
 #define DIMU_HAVE_MPU6000
 #define DIMU_HAVE_HMC5983
@@ -30,6 +41,8 @@
 
 #define MPU6000_ACC_SCALE           8     // g      (2, 4, 8, 16)
 #define MPU6000_GYO_SCALE           1000  // deg/s  (250, 500, 1000, 2000)
+
+#endif
 
 #define DIMU_ORIENT_ACC_X	    (+in[0])
 #define DIMU_ORIENT_ACC_Y	    (+in[1])

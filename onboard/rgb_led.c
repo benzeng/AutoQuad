@@ -135,6 +135,7 @@ static void rgbledLowLevelInit( void )
 #endif
 }
 
+#if 0
 /**
   * @brief  This function handles the DMA Tx Channel interrupt Handler.
   * @param  None
@@ -161,7 +162,7 @@ void RGBLED_I2C_DMA_TX_IRQHandler(void)
 	I2C_GenerateSTOP(RGBLED_I2C, ENABLE);
     }
 }
-
+#endif
 
 /**
   * @brief  Initializes DMA channel used by the I2C RGB LED driver.
@@ -170,6 +171,7 @@ void RGBLED_I2C_DMA_TX_IRQHandler(void)
   */
 static void ledrgbLowLevelDMAConfig(uint32_t pBuffer, uint32_t BufferSize)
 { 
+#if 0
     DMA_InitTypeDef    rgbledDMA_InitStructure;
 
 /* Clear any pending flag on Rx Stream  */
@@ -223,6 +225,7 @@ static void ledrgbLowLevelDMAConfig(uint32_t pBuffer, uint32_t BufferSize)
 
     DMA_FlowControllerConfig(RGBLED_I2C_DMA_STREAM_TX, DMA_FlowCtrl_Peripheral);
     DMA_Cmd(RGBLED_I2C_DMA_STREAM_TX, ENABLE);
+#endif
 }
 
 static void transfer( const uint8_t *msg, uint32_t BufferSize )

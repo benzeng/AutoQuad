@@ -61,6 +61,15 @@ void spi1Init(void) {
 	// SPI interface
 	RCC_APB2PeriphClockCmd(SPI_SPI1_CLOCK, ENABLE);
 
+        /*!< Enable GPIO clocks */
+	// Ben+ : ToDo: Test this line !
+	RCC_AHB1PeriphClockCmd( SPI_SPI1_GPIO_CLOCK | PX4_BARO_SPI_CS_CLK , ENABLE );
+
+        // Connect SPI pins to Alternate Function
+	GPIO_PinAFConfig(SPI_SPI1_SCK_PORT,SPI_SPI1_SCK_SOURCE, SPI_SPI1_AF);
+	GPIO_PinAFConfig(SPI_SPI1_MISO_PORT, SPI_SPI1_MISO_SOURCE, SPI_SPI1_AF);
+	GPIO_PinAFConfig(SPI_SPI1_MOSI_PORT, SPI_SPI1_MOSI_SOURCE, SPI_SPI1_AF);
+
 	GPIO_StructInit(&GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -77,21 +86,25 @@ void spi1Init(void) {
 	GPIO_InitStructure.GPIO_Pin = SPI_SPI1_MOSI_PIN;
 	GPIO_Init(SPI_SPI1_MOSI_PORT, &GPIO_InitStructure);
 
-	// Connect SPI pins to Alternate Function
-	GPIO_PinAFConfig(SPI_SPI1_SCK_PORT,SPI_SPI1_SCK_SOURCE, SPI_SPI1_AF);
-	GPIO_PinAFConfig(SPI_SPI1_MISO_PORT, SPI_SPI1_MISO_SOURCE, SPI_SPI1_AF);
-	GPIO_PinAFConfig(SPI_SPI1_MOSI_PORT, SPI_SPI1_MOSI_SOURCE, SPI_SPI1_AF);
+        /*!< Configure MS5611 CS pin in output pushpull mode ********************/
+	GPIO_InitStructure.GPIO_Pin = PX4_BARO_SPI_CS_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(PX4_BARO_SPI_CS_PORT, &GPIO_InitStructure);
+
 
 	// SPI configuration
 	SPI_I2S_DeInit(SPI1);
 	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
 	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
-	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
+	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;// SPI_CPOL_High;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;//SPI_CPHA_2Edge;
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
 	SPI_Init(SPI1, &SPI_InitStructure);
 
@@ -165,6 +178,9 @@ void spi1Init(void) {
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
+
+	// Ben+
+        SPI_Cmd(SPI1, ENABLE);
     }
 }
 #endif
@@ -510,10 +526,13 @@ static void spiEndTxn(spiStruct_t *interface) {
 
     interface->txRunning = 0;
 
-    spiTriggerSchedule(client->interface);
+    //spiTriggerSchedule(client->interface);
 }
 
 void spiChangeBaud(spiClient_t *client, uint16_t baud) {
+
+#ifndef PX4FMU
+
     // SPI1 runs at twice the speed of SPI2
     if (client->interface == 0) {
 	if (baud == SPI_BaudRatePrescaler_2)
@@ -531,6 +550,8 @@ void spiChangeBaud(spiClient_t *client, uint16_t baud) {
 	else if (baud == SPI_BaudRatePrescaler_128)
 	    baud = SPI_BaudRatePrescaler_256;
     }
+
+#endif
 
     client->baud = baud;
 }
@@ -554,6 +575,83 @@ void spiTransaction(spiClient_t *client, volatile void *rxBuf, void *txBuf, uint
 
     spiTriggerSchedule(client->interface);
 }
+
+void spi1Transaction(spiClient_t *client, volatile void *rxBuf, void *txBuf, uint16_t size) {
+    spiStruct_t *interface = &spiData[client->interface];
+    uint8_t head = interface->head;
+    spiSlot_t *slot = &interface->slots[head];
+
+    slot->size = size;
+    slot->rxBuf = (uint32_t)rxBuf;
+    slot->txBuf = (uint32_t)txBuf;
+    slot->client = client;
+
+    interface->head = (head + 1) % SPI_SLOTS;
+
+    
+    spiStartTxn(&spiData[0]);
+}
+
+
+
+/**
+  * @brief  Sends a byte through the SPI interface and return the byte received
+  *         from the SPI bus.
+  * @param  byte: byte to send.
+  * @retval none
+  */
+uint8_t spiExchangeByte(spiStruct_t *interface, uint8_t byte)
+{
+    static int n = 0;
+
+  /*!< Loop while DR register in not emplty   */
+  while (SPI_I2S_GetFlagStatus( interface->spi, SPI_I2S_FLAG_TXE) == RESET);
+
+  /*!< Send byte through the SPI1 peripheral */
+  SPI_I2S_SendData(interface->spi, byte);
+
+if( n == 0 )
+{
+    ++n;
+//    return 0;
+}
+
+  /*!< Wait to receive a byte */
+  while (SPI_I2S_GetFlagStatus(interface->spi, SPI_I2S_FLAG_RXNE) == RESET)
+    delay(5);
+
+  return SPI_I2S_ReceiveData( interface->spi );
+}
+
+void spiReadBuffer(spiClient_t *client, volatile void *rxBuf, void *txBuf, uint16_t rxSize, uint16_t txSize) {
+    spiStruct_t *interface = &spiData[client->interface];
+    char* pTx = (char*)txBuf;
+    char* pRx = (char*)rxBuf;
+
+    spiSelect( client );
+    
+    // Send data first
+    while ( txSize-- > 1 ) 
+    {
+	spiExchangeByte( interface, *pTx );
+	pTx++;
+    }
+    *pRx = spiExchangeByte( interface, *pTx );
+    ++pRx;
+    --rxSize;
+
+    while( rxSize-- > 0 )
+    {
+	// dummy value: 0xA5
+	*pRx = spiExchangeByte( interface, 0xA5 );
+	++pRx;
+    }
+
+    spiDeselect( client );
+}
+
+
+
 
 spiClient_t *spiClientInit(SPI_TypeDef *spi, uint16_t baud, GPIO_TypeDef *csPort, uint16_t csPin, volatile uint32_t *flag, spiCallback_t *callback) {
     spiClient_t *client;
@@ -610,8 +708,35 @@ void SPI_SPI3_DMA_RX_HANDLER(void) {
 }
 #endif
 
+
+//#define SPI_CR1_CPHA              (1 << 0)  /* Bit 0: Clock Phase */
+//#define SPI_CR1_CPOL              (1 << 1)  /* Bit 1: Clock Polarity */
+#define SPI_CR1_BR_SHIFT          (3)       /* Bits 5:3 Baud Rate Control */
+#define SPI_CR1_BR_MASK           (7 << SPI_CR1_BR_SHIFT)
+#  define SPI_CR1_FPCLCKd2        (0 << SPI_CR1_BR_SHIFT) /* 000: fPCLK/2 */
+#  define SPI_CR1_FPCLCKd4        (1 << SPI_CR1_BR_SHIFT) /* 001: fPCLK/4 */
+#  define SPI_CR1_FPCLCKd8        (2 << SPI_CR1_BR_SHIFT) /* 010: fPCLK/8 */
+#  define SPI_CR1_FPCLCKd16       (3 << SPI_CR1_BR_SHIFT) /* 011: fPCLK/16 */
+#  define SPI_CR1_FPCLCKd32       (4 << SPI_CR1_BR_SHIFT) /* 100: fPCLK/32 */
+#  define SPI_CR1_FPCLCKd64       (5 << SPI_CR1_BR_SHIFT) /* 101: fPCLK/64 */
+#  define SPI_CR1_FPCLCKd128      (6 << SPI_CR1_BR_SHIFT) /* 110: fPCLK/128 */
+#  define SPI_CR1_FPCLCKd256      (7 << SPI_CR1_BR_SHIFT) /* 111: fPCLK/256 */
+
 // co-op the Ethernet IRQ for our purposes
 void ETH_IRQHandler(void) {
+
+#if 0
+    // PX4FMU
+    uint32_t tmp;
+    tmp = spiData[0].spi->CR1;
+    tmp |= SPI_CR1_CPHA | SPI_CR1_CPOL;
+
+    //tmp &= ~SPI_CR1_BR_MASK;
+    //tmp |= SPI_CR1_FPCLCKd2;
+
+    spiData[0].spi->CR1 = tmp;
+#endif
+
     spiStartTxn(&spiData[0]);
 }
 

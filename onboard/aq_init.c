@@ -77,6 +77,11 @@ void aqInit(void *pdata) {
 #endif
 
     sdioLowLevelInit();
+
+//void SD_SingleBlockTest(void);
+//    SD_SingleBlockTest(); 
+
+
     filerInit();
     supervisorInit();
     configInit();
@@ -87,17 +92,25 @@ void aqInit(void *pdata) {
 #endif
     telemetryInit();
 
+#if 0
     extern void eepromTest( void );
     eepromTest();
+#endif
 
-    //imuInit();    
+void TestMS5611( void );
+    TestMS5611();
+
+    imuInit();    
 /*
     analogInit();
     navUkfInit();
     radioInit();
     gpsInit();
     navInit();
+*/
+
     commandInit();
+/*
 #ifdef USE_SIGNALING
     signalingInit();
 #endif
@@ -108,8 +121,10 @@ void aqInit(void *pdata) {
     canInit();
 #endif
     motorsInit();
+*/
     controlInit();
     gimbalInit();
+
     runInit();
 
     info();
@@ -127,7 +142,7 @@ void aqInit(void *pdata) {
 
     // start telemetry
     telemetryEnable();
-*/
+
     // reset idle loop calibration now that everything is running
     minCycles = 999999999;
 

@@ -19,29 +19,29 @@
 #ifndef _board_h
 #define _board_h
 
+// Ben+
+#define SD_SDIO_DMA_CLK                     RCC_AHB1Periph_DMA2
+
 #define SDIO_DMA			    DMA2
-#define SDIO_DMA_STREAM			DMA2_Stream3
-#define SDIO_DMA_CHANNEL		DMA_Channel_4
-#define SDIO_DMA_FLAG_FEIF		DMA_FLAG_FEIF3
-#define SDIO_DMA_FLAG_DMEIF		DMA_FLAG_DMEIF3
-#define SDIO_DMA_FLAG_TEIF		DMA_FLAG_TEIF3
-#define SDIO_DMA_FLAG_HTIF		DMA_FLAG_HTIF3
-#define SDIO_DMA_FLAG_TCIF		DMA_FLAG_TCIF3
-#define SDIO_DMA_IRQHANDLER		DMA2_Stream3_IRQHandler
-#define SDIO_DMA_IRQn			DMA2_Stream3_IRQn
+#define SDIO_DMA_STREAM			    DMA2_Stream3
+#define SDIO_DMA_CHANNEL		    DMA_Channel_4
+#define SDIO_DMA_FLAG_FEIF		    DMA_FLAG_FEIF3
+#define SDIO_DMA_FLAG_DMEIF		    DMA_FLAG_DMEIF3
+#define SDIO_DMA_FLAG_TEIF		    DMA_FLAG_TEIF3
+#define SDIO_DMA_FLAG_HTIF		    DMA_FLAG_HTIF3
+#define SDIO_DMA_FLAG_TCIF		    DMA_FLAG_TCIF3
+#define SDIO_DMA_IRQHANDLER		    DMA2_Stream3_IRQHandler
+#define SDIO_DMA_IRQn			    DMA2_Stream3_IRQn
 
 #ifdef PX4FMU
 
 // Use FMU LED AMBER temp.
-#define SDIO_POWER_PORT			GPIOE
-#define SDIO_POWER_PIN			GPIO_Pin_12
-
+//#define SDIO_POWER_PORT			    GPIOE
+//#define SDIO_POWER_PIN			    GPIO_Pin_12
 //
-// Ben: GPIOF not found in PX4FMU PCB file. How to fix it ?
-//
-#define SDIO_DETECT_GPIO_PORT		    GPIOI                  //GPIOF
+#define SDIO_DETECT_GPIO_PORT		    GPIOF
 #define SDIO_DETECT_PIN			    GPIO_Pin_11
-#define SDIO_DETECT_PORT_SOURCE		    EXTI_PortSourceGPIOI   //EXTI_PortSourceGPIOF 
+#define SDIO_DETECT_PORT_SOURCE		    EXTI_PortSourceGPIOF   //EXTI_PortSourceGPIOF 
 #define SDIO_DETECT_PIN_SOURCE		    EXTI_PinSource11
 #define SDIO_DETECT_IRQ			    EXTI15_10_IRQn
 #define SDIO_DETECT_HANDLER		    EXTI15_10_IRQHandler
@@ -61,11 +61,20 @@
 
 #endif
 
-//#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x00)	// SDIO Data Transfer Frequency (24MHz max)
+#ifdef PX4FMU
+
+#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x00)	// SDIO Data Transfer Frequency (24MHz max)
+
+#else
+
+#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x00)	// SDIO Data Transfer Frequency (24MHz max)
 //#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x02)	// SDIO Data Transfer Frequency (12MHz max)
-#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x04)	// SDIO Data Transfer Frequency (6MHz max)
+//#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x04)	// SDIO Data Transfer Frequency (6MHz max)
 //#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x08)	// SDIO Data Transfer Frequency (3MHz max)
-//#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x10)	// SDIO Data Transfer Frequency (1.5MHz max)
+////#define SDIO_TRANSFER_CLK_DIV           ((uint8_t)0x10)	// SDIO Data Transfer Frequency (1.5MHz max)
+
+#endif
+
 
 enum pwmPorts {
     PWM_1 = 0,
@@ -327,8 +336,16 @@ enum pwmPorts {
 
 #ifdef PX4FMU
 
+
 //
 // SPI2
+//
+//
+// FM5V01 Flash RAM is connected to SPI2
+//
+#define FM5V01_SPI	            SPI2
+#define FM5V01_SPI_CS_PORT	    GPIOD
+#define FM5V01_SPI_CS_PIN	    GPIO_Pin_10
 //
 #define SPI_SPI2_CLOCK		    RCC_APB1Periph_SPI2
 #define SPI_SPI2_AF		    GPIO_AF_SPI2
@@ -360,12 +377,7 @@ enum pwmPorts {
 #define PX4_SPI_EXT_MISO_PIN       GPIO_Pin_5
 #define PX4_SPI_EXT_MOSI_PIN       GPIO_Pin_6
 
-//
-// FM5V01 Flash RAM is connected to SPI2
-//
-#define FM5V01_SPI	            SPI2
-#define FM5V01_SPI_CS_PORT	    GPIOD
-#define FM5V01_SPI_CS_PIN	    GPIO_Pin_10
+
 
 // 
 // SPI1
@@ -384,16 +396,24 @@ enum pwmPorts {
 #define SPI_SPI1_SCK_SOURCE   GPIO_PinSource5
 #define SPI_SPI1_MISO_SOURCE  GPIO_PinSource6
 #define SPI_SPI1_MOSI_SOURCE  GPIO_PinSource7
+#define SPI_SPI1_GPIO_CLOCK   RCC_AHB1Periph_GPIOA
 //
+/*
 #define SPI_SPI1_DMA_RX		    DMA1_Stream1
 #define SPI_SPI1_DMA_RX_CHANNEL	    DMA_Channel_0
 #define SPI_SPI1_DMA_RX_FLAGS	    (DMA_IT_TEIF1 | DMA_IT_DMEIF1 | DMA_IT_FEIF1 | DMA_IT_TCIF1 | DMA_IT_HTIF1)
 #define SPI_SPI1_DMA_RX_IRQ	    DMA1_Stream1_IRQn
 #define SPI_SPI1_DMA_RX_HANDLER	    DMA1_Stream1_IRQHandler
+*/
+#define SPI_SPI1_DMA_RX		    DMA1_Stream2
+#define SPI_SPI1_DMA_RX_CHANNEL	    DMA_Channel_0
+#define SPI_SPI1_DMA_RX_FLAGS	    (DMA_IT_TEIF2 | DMA_IT_DMEIF2 | DMA_IT_FEIF2 | DMA_IT_TCIF2 | DMA_IT_HTIF2)
+#define SPI_SPI1_DMA_RX_IRQ	    DMA1_Stream2_IRQn
+#define SPI_SPI1_DMA_RX_HANDLER	    DMA1_Stream2_IRQHandler
 //
-#define SPI_SPI1_DMA_TX		    DMA1_Stream2
+#define SPI_SPI1_DMA_TX		    DMA2_Stream5
 #define SPI_SPI1_DMA_TX_CHANNEL	    DMA_Channel_0
-#define SPI_SPI1_DMA_TX_FLAGS	    (DMA_IT_TEIF2 | DMA_IT_DMEIF2 | DMA_IT_FEIF2 | DMA_IT_TCIF2 | DMA_IT_HTIF2)
+#define SPI_SPI1_DMA_TX_FLAGS	    (DMA_IT_TEIF5 | DMA_IT_DMEIF5 | DMA_IT_FEIF5 | DMA_IT_TCIF5 | DMA_IT_HTIF5)
 
 
 
@@ -425,13 +445,15 @@ enum pwmPorts {
 #define PX4_ACCEL_EXTI_INT_PIN       GPIO_Pin_4
 #define PX4_ACCEL_EXTI_DRDY_PORT     EXTI_PortSourceGPIOB
 #define PX4_ACCEL_EXTI_DRDY_PIN      EXTI_PinSource4
-#define PX4_ACCEL_EXTI_DRDY_LINE     EXTI_Line1
+#define PX4_ACCEL_EXTI_DRDY_LINE     EXTI_Line4
 #define PX4_ACCEL_EXTI_DRDY_IRQ      EXTI4_IRQn
 #define PX4_ACCEL_EXTI_DRDY_ISR      EXTI4_IRQHandler
 
 // BARO: MS5611
 #define PX4_BARO_SPI_CS_PORT         GPIOD         
 #define PX4_BARO_SPI_CS_PIN          GPIO_Pin_7
+
+#define PX4_BARO_SPI_CS_CLK          RCC_AHB1Periph_GPIOD // Ben: ToDo, test it.
 
 #else  // nodef PX4FMU
 
@@ -757,11 +779,14 @@ enum pwmPorts {
 #define UKF_POS_DELAY           +2.1923e+03     // +2192.300048828125    0.000000500000 +0.000000000000125
 #define UKF_VEL_DELAY           -1.0182e+05     // -101820.000000000000  0.000000500000 +0.00000000000000000
 
+#ifndef PX4FMU
 
 #define HAS_AIMU
 
 #define ANALOG_VIN_RTOP            4.7f   // first run beta boards were 4.7K, second run are 8.45K
 #define ANALOG_VIN_RBOT            1.33f
+
+#endif
 
 #define MOTORS_PWM_FREQ		    400	// Hz
 

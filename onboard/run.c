@@ -150,8 +150,13 @@ void runTaskCode(void *unused) {
 	CoSetFlag(runData.runFlag);	// new state data
 
 	navNavigate();
+
+#ifndef PX4FMU
+
 #ifndef HAS_AIMU
 	analogDecode();
+#endif
+
 #endif
 	if (!(loops % (int)(1.0f / AQ_OUTER_TIMESTEP)))
 	    loggerDoHeader();

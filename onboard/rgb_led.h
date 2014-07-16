@@ -78,6 +78,8 @@ typedef unsigned char bool;
 #define RGBLED_I2C_SDA_SOURCE               GPIO_PinSource11
 #define RGBLED_I2C_SDA_AF                   GPIO_AF_I2C2
 
+#if 0
+
 // #define PERIPH_BASE           ((uint32_t)0x40000000) 
 // #define AHB1PERIPH_BASE       (PERIPH_BASE + 0x00020000)
 // #define DMA2_BASE             (AHB1PERIPH_BASE + 0x6400)
@@ -88,6 +90,8 @@ typedef unsigned char bool;
 #define RGBLED_I2C_DMA_CLK                  RCC_AHB1Periph_DMA2
 #define RGBLED_I2C_DMA_TX_IRQn              DMA2_Stream5_IRQn
 #define RGBLED_I2C_DMA_TX_IRQHandler        DMA2_Stream5_IRQHandler
+
+#endif
 
 // #define I2C2_BASE             (APB1PERIPH_BASE + 0x5800)
 // #define I2C2                ((I2C_TypeDef *) I2C2_BASE)

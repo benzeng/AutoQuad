@@ -66,4 +66,6 @@ extern void spiChangeBaud(spiClient_t *spi, uint16_t baud);
 extern void spiChangeCallback(spiClient_t *client, spiCallback_t *callback);
 extern void spiTransaction(spiClient_t *client, volatile void *rxBuf, void *txBuf, uint16_t size);
 
+extern void spiReadBuffer(spiClient_t *client, volatile void *rxBuf, void *txBuf, uint16_t rxSize, uint16_t txSize);
+
 #endif
