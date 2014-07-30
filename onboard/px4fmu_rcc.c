@@ -296,9 +296,11 @@ static inline void rcc_enableahb3(void)
  *
  ****************************************************************************/
 
-static inline void rcc_enableapb1(void)
+static inline uint32_t rcc_enableapb1(void)
 {
-  uint32_t regval;
+  uint32_t regval = 0;
+  uint32_t i = 0;
+
 
   /* Set the appropriate bits in the APB1ENR register to enabled the
    * selected APB1 peripherals.
@@ -306,34 +308,40 @@ static inline void rcc_enableapb1(void)
 
   regval = getreg32(STM32_RCC_APB1ENR);
 
+
 #ifdef CONFIG_STM32_TIM2
   /* TIM2 clock enable */
 
   regval |= RCC_APB1ENR_TIM2EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_TIM3
   /* TIM3 clock enable */
 
   regval |= RCC_APB1ENR_TIM3EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_TIM4
   /* TIM4 clock enable */
 
   regval |= RCC_APB1ENR_TIM4EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_TIM5
   /* TIM5 clock enable */
 
   regval |= RCC_APB1ENR_TIM5EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_TIM6
   /* TIM6 clock enable */
 
   regval |= RCC_APB1ENR_TIM6EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_TIM7
@@ -346,24 +354,28 @@ static inline void rcc_enableapb1(void)
   /* TIM12 clock enable */
 
   regval |= RCC_APB1ENR_TIM12EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_TIM13
   /* TIM13 clock enable */
 
   regval |= RCC_APB1ENR_TIM13EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_TIM14
   /* TIM14 clock enable */
 
   regval |= RCC_APB1ENR_TIM14EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_WWDG
   /* Window watchdog clock enable */
 
   regval |= RCC_APB1ENR_WWDGEN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_SPI2
@@ -376,12 +388,14 @@ static inline void rcc_enableapb1(void)
   /* SPI3 clock enable */
 
   regval |= RCC_APB1ENR_SPI3EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_USART2
   /* USART 2 clock enable */
 
   regval |= RCC_APB1ENR_USART2EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_USART3
@@ -394,42 +408,49 @@ static inline void rcc_enableapb1(void)
   /* UART4 clock enable */
 
   regval |= RCC_APB1ENR_UART4EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_UART5
   /* UART5 clock enable */
 
   regval |= RCC_APB1ENR_UART5EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_I2C1
   /* I2C1 clock enable */
 
   regval |= RCC_APB1ENR_I2C1EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_I2C2
   /* I2C2 clock enable */
 
   regval |= RCC_APB1ENR_I2C2EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_I2C3
   /* I2C3 clock enable */
 
   regval |= RCC_APB1ENR_I2C3EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_CAN1
   /* CAN 1 clock enable */
 
   regval |= RCC_APB1ENR_CAN1EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_CAN2
   /* CAN2 clock enable.  NOTE: CAN2 needs CAN1 clock as well. */
 
   regval |= (RCC_APB1ENR_CAN1EN | RCC_APB1ENR_CAN2EN);
+  i++;
 #endif
 
   /* Power interface clock enable.  The PWR block is always enabled so that
@@ -437,27 +458,34 @@ static inline void rcc_enableapb1(void)
    */
 
   regval |= RCC_APB1ENR_PWREN;
+  i++;
 
 #if defined (CONFIG_STM32_DAC1) || defined(CONFIG_STM32_DAC2)
   /* DAC interface clock enable */
 
   regval |= RCC_APB1ENR_DACEN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_UART7
   /* UART7 clock enable */
 
   regval |= RCC_APB1ENR_UART7EN;
+  i++;
 #endif
 
 #ifdef CONFIG_STM32_UART8
   /* UART8 clock enable */
 
   regval |= RCC_APB1ENR_UART8EN;
+  i++;
 #endif
 
 
   putreg32(regval, STM32_RCC_APB1ENR);   /* Enable peripherals */
+
+  regval = i;
+  return i;
 }
 
 /****************************************************************************
@@ -755,6 +783,5 @@ void stm32_clockconfig(void)
 #endif
 
   /* Enable peripheral clocking */
-
   rcc_enableperipherals();
 }

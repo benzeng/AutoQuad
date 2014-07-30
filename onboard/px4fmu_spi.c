@@ -669,7 +669,7 @@ static void spi_exchange_nodma(FAR struct spi_dev_s *dev, FAR const void *txbuff
  ************************************************************************************/
 static void spi_sndblock(FAR struct spi_dev_s *dev, FAR const void *txbuffer, size_t nwords)
 {
-  return spi_exchange_nodma(dev, txbuffer, NULL, nwords);
+     spi_exchange_nodma(dev, txbuffer, NULL, nwords);
 }
 
 
@@ -1004,10 +1004,11 @@ void  stm32_spiinitialize(void)
 }
 
 
-static struct spi_dev_s *spi1 = NULL;
 //static struct spi_dev_s *spi2 = NULL;
 void InitPx4fmuSPI( void )
 {
+    struct spi_dev_s *spi1 = NULL;
+
     /* configure SPI interfaces */
     stm32_spiinitialize();
 
@@ -1026,55 +1027,6 @@ void InitPx4fmuSPI( void )
     }
 }
 
-
-#define ADDR_RESET_CMD			0x1E	/* write to this address to reset chip */
-#define ADDR_CMD_CONVERT_D1		0x48	/* write to this address to start temperature conversion */
-#define ADDR_CMD_CONVERT_D2		0x58	/* write to this address to start pressure conversion */
-#define ADDR_DATA			0x00	/* address of 3 bytes / 32bit pressure data */
-#define ADDR_PROM_SETUP			0xA0	/* address of 8x 2 bytes factory and calibration data */
-#define ADDR_PROM_C1			0xA2	/* address of 6x 2 bytes calibration data */
-
-/* SPI protocol address bits */
-#define DIR_READ			(1<<7)
-#define DIR_WRITE			(0<<7)
-#define ADDR_INCREMENT			(1<<6)
-
-/**
- * Calibration PROM as reported by the device.
- */
-#pragma pack(push,1)
-struct prom_s {
-	uint16_t factory_setup;
-	uint16_t c1_pressure_sens;
-	uint16_t c2_pressure_offset;
-	uint16_t c3_temp_coeff_pres_sens;
-	uint16_t c4_temp_coeff_pres_offset;
-	uint16_t c5_reference_temp;
-	uint16_t c6_temp_coeff_temp;
-	uint16_t serial_and_crc;
-};
-
-/**
- * Grody hack for crc4()
- */
-union prom_u {
-	uint16_t c[8];
-	struct prom_s s;
-};
-#pragma pack(pop)
-
-
-typedef struct _SPI_INSTANCE_DATA
-{
-    int			_bus;
-    enum spi_dev_e	_device;
-    enum spi_mode_e	_mode;
-    uint32_t		_frequency;
-    struct spi_dev_s	*_dev;
-}SPI_INSTANCE_DATA;
-
-SPI_INSTANCE_DATA spiMS5611;
-
 void SpiTransfer( SPI_INSTANCE_DATA *pThis, uint8_t *send, uint8_t *recv, unsigned len )
 {
     SPI_LOCK( pThis->_dev, true );
@@ -1092,110 +1044,6 @@ void SpiTransfer( SPI_INSTANCE_DATA *pThis, uint8_t *send, uint8_t *recv, unsign
 
     SPI_LOCK( pThis->_dev, false );
 }
-
-void ResetMS5611( SPI_INSTANCE_DATA *pThis )
-{
-    uint8_t cmd = ADDR_RESET_CMD | DIR_WRITE;
-
-    return  SpiTransfer(pThis, &cmd, NULL, 1);
-}
-
-
-static void _measure(SPI_INSTANCE_DATA *pThis, unsigned addr)
-{
-	uint8_t cmd = addr | DIR_WRITE;
-
-	SpiTransfer(pThis, &cmd, NULL, 1);
-}
-
-static uint16_t _reg16(SPI_INSTANCE_DATA *pThis, unsigned reg)
-{
-	uint8_t cmd[3] = { (uint8_t)(reg | DIR_READ), 0, 0 };
-
-	SpiTransfer(pThis, cmd, cmd, sizeof(cmd));
-
-	return (uint16_t)(cmd[1] << 8) | cmd[2];
-}
-
-/**
- * MS5611 crc4 cribbed from the datasheet
- */
-static bool _crc4(uint16_t *n_prom)
-{
-	int16_t cnt;
-	uint16_t n_rem;
-	uint16_t crc_read;
-	uint8_t n_bit;
-
-	n_rem = 0x00;
-
-	/* save the read crc */
-	crc_read = n_prom[7];
-
-	/* remove CRC byte */
-	n_prom[7] = (0xFF00 & (n_prom[7]));
-
-	for (cnt = 0; cnt < 16; cnt++) {
-		/* uneven bytes */
-		if (cnt & 1) {
-			n_rem ^= (uint8_t)((n_prom[cnt >> 1]) & 0x00FF);
-
-		} else {
-			n_rem ^= (uint8_t)(n_prom[cnt >> 1] >> 8);
-		}
-
-		for (n_bit = 8; n_bit > 0; n_bit--) {
-			if (n_rem & 0x8000) {
-				n_rem = (n_rem << 1) ^ 0x3000;
-
-			} else {
-				n_rem = (n_rem << 1);
-			}
-		}
-	}
-
-	/* final 4 bit remainder is CRC value */
-	n_rem = (0x000F & (n_rem >> 12));
-	n_prom[7] = crc_read;
-
-	/* return true if CRCs match */
-	return (0x000F & crc_read) == (n_rem ^ 0x00);
-}
-
-int ReadPROM( SPI_INSTANCE_DATA *pThis )
-{
-	union prom_u _prom;
-
-	/*
-	 * Wait for PROM contents to be in the device (2.8 ms) in the case we are
-	 * called immediately after reset.
-	 */
-	yield(3000);
-
-	/* read and convert PROM words */
-        bool all_zero = true;
-	for (int i = 0; i < 8; i++) {
-		uint8_t cmd = (ADDR_PROM_SETUP + (i * 2));
-		_prom.c[i] = _reg16(pThis, cmd);
-                if (_prom.c[i] != 0)
-			all_zero = false;
-                //debug("prom[%u]=0x%x", (unsigned)i, (unsigned)_prom.c[i]);
-	}
-
-	/* calculate CRC and return success/failure accordingly */
-	int ret = _crc4(&_prom.c[0]) ? 0 : -1;
-        if (ret != OK) {
-		//debug("crc failed");
-		return -1;
-        }
-        if (all_zero) {
-		//debug("prom all zero");
-		ret = -1;
-        }
-        return ret;
-}
-
-
 
 void sensor_reset( void )
 {
@@ -1269,11 +1117,160 @@ void sensor_reset( void )
 #endif
 }
 
+#if 0
+
+#define ADDR_RESET_CMD			0x1E	/* write to this address to reset chip */
+#define ADDR_CMD_CONVERT_D1		0x48	/* write to this address to start temperature conversion */
+#define ADDR_CMD_CONVERT_D2		0x58	/* write to this address to start pressure conversion */
+#define ADDR_DATA			0x00	/* address of 3 bytes / 32bit pressure data */
+#define ADDR_PROM_SETUP			0xA0	/* address of 8x 2 bytes factory and calibration data */
+#define ADDR_PROM_C1			0xA2	/* address of 6x 2 bytes calibration data */
+
+/* SPI protocol address bits */
+#define DIR_READ			(1<<7)
+#define DIR_WRITE			(0<<7)
+#define ADDR_INCREMENT			(1<<6)
+
+/**
+ * Calibration PROM as reported by the device.
+ */
+#pragma pack(push,1)
+struct prom_s {
+	uint16_t factory_setup;
+	uint16_t c1_pressure_sens;
+	uint16_t c2_pressure_offset;
+	uint16_t c3_temp_coeff_pres_sens;
+	uint16_t c4_temp_coeff_pres_offset;
+	uint16_t c5_reference_temp;
+	uint16_t c6_temp_coeff_temp;
+	uint16_t serial_and_crc;
+};
+
+/**
+ * Grody hack for crc4()
+ */
+union prom_u {
+	uint16_t c[8];
+	struct prom_s s;
+};
+#pragma pack(pop)
+
+
+
+
+SPI_INSTANCE_DATA spiMS5611;
+
+
+void ResetMS5611( SPI_INSTANCE_DATA *pThis )
+{
+    uint8_t cmd = ADDR_RESET_CMD | DIR_WRITE;
+
+    return  SpiTransfer(pThis, &cmd, NULL, 1);
+}
+
+
+static void _measure(SPI_INSTANCE_DATA *pThis, unsigned addr)
+{
+	uint8_t cmd = addr | DIR_WRITE;
+
+	SpiTransfer(pThis, &cmd, NULL, 1);
+}
+
+static uint16_t _reg16(SPI_INSTANCE_DATA *pThis, unsigned reg)
+{
+	uint8_t cmd[3] = { (uint8_t)(reg | DIR_READ), 0, 0 };
+
+	SpiTransfer(pThis, cmd, cmd, sizeof(cmd));
+
+	return (uint16_t)(cmd[1] << 8) | cmd[2];
+}
+
+/**
+ * MS5611 crc4 cribbed from the datasheet
+ */
+static bool _crc4(uint16_t *n_prom)
+{
+	int16_t cnt;
+	uint16_t n_rem;
+	uint16_t crc_read;
+	uint8_t n_bit;
+
+	n_rem = 0x00;
+
+	/* save the read crc */
+	crc_read = n_prom[7];
+
+	/* remove CRC byte */
+	n_prom[7] = (0xFF00 & (n_prom[7]));
+
+	for (cnt = 0; cnt < 16; cnt++) {
+		/* uneven bytes */
+		if (cnt & 1) {
+			n_rem ^= (uint8_t)((n_prom[cnt >> 1]) & 0x00FF);
+
+		} else {
+			n_rem ^= (uint8_t)(n_prom[cnt >> 1] >> 8);
+		}
+
+		for (n_bit = 8; n_bit > 0; n_bit--) {
+			if (n_rem & 0x8000) {
+				n_rem = (n_rem << 1) ^ 0x3000;
+
+			} else {
+				n_rem = (n_rem << 1);
+			}
+		}
+	}
+
+	/* final 4 bit remainder is CRC value */
+	n_rem = (0x000F & (n_rem >> 12));
+	n_prom[7] = crc_read;
+
+	/* return true if CRCs match */
+	return (0x000F & crc_read) == (n_rem ^ 0x00);
+}
+
+static int ReadPROM( SPI_INSTANCE_DATA *pThis )
+{
+	union prom_u _prom;
+
+	/*
+	 * Wait for PROM contents to be in the device (2.8 ms) in the case we are
+	 * called immediately after reset.
+	 */
+	yield(3000);
+
+	/* read and convert PROM words */
+        bool all_zero = true;
+	for (int i = 0; i < 8; i++) {
+		uint8_t cmd = (ADDR_PROM_SETUP + (i * 2));
+		_prom.c[i] = _reg16(pThis, cmd);
+                if (_prom.c[i] != 0)
+			all_zero = false;
+                //debug("prom[%u]=0x%x", (unsigned)i, (unsigned)_prom.c[i]);
+	}
+
+	/* calculate CRC and return success/failure accordingly */
+	int ret = _crc4(&_prom.c[0]) ? 0 : -1;
+        if (ret != OK) {
+		//debug("crc failed");
+		return -1;
+        }
+        if (all_zero) {
+		//debug("prom all zero");
+		ret = -1;
+        }
+        return ret;
+}
+
+
 void TestMS5611( void )
 {
-    void stm32_clockconfig(void);
-    stm32_clockconfig();
-    InitPx4fmuSPI();
+    //void stm32_clockconfig(void);
+    //stm32_clockconfig();
+    //InitPx4fmuSPI();
+    void px4fmu_boardinitialize(void);
+    px4fmu_boardinitialize();
 
     spiMS5611._bus = 1;
     spiMS5611._device = PX4_SPIDEV_BARO;
@@ -1291,4 +1288,4 @@ void TestMS5611( void )
     /* read PROM */
     ReadPROM( &spiMS5611 );
 }
-
+#endif

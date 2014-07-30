@@ -14,7 +14,7 @@
 #include "px4fmu_gpio.h"
 
 // Setup SPI1,SPI2
-#define CONFIG_STM32_SPI1
+//#define CONFIG_STM32_SPI1
 //#define CONFIG_STM32_SPI2
 
 /*
@@ -461,6 +461,20 @@ struct spi_dev_s
   const struct spi_ops_s *ops;
 };
 
+/*
+   SPI instanace data
+*/
+typedef struct _SPI_INSTANCE_DATA
+{
+    int			_bus;
+    enum spi_dev_e	_device;
+    enum spi_mode_e	_mode;
+    uint32_t		_frequency;
+    struct spi_dev_s	*_dev;
+
+    void                *pData;
+}SPI_INSTANCE_DATA;
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -473,6 +487,10 @@ extern "C"
 #else
 #define EXTERN extern
 #endif
+
+void InitPx4fmuSPI( void );
+void SpiTransfer( SPI_INSTANCE_DATA *pThis, uint8_t *send, uint8_t *recv, unsigned len );
+void sensor_reset( void );
 
 /****************************************************************************
  * Name: up_spiinitialize
