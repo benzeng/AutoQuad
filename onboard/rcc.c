@@ -38,8 +38,13 @@ void rccConfiguration(void) {
     GPIO_Init(GPIOE, &GPIO_InitStructure);
 
     // exclude PA13 & PA14 for SWD
+#ifdef PX4FMU
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_All & ~(GPIO_Pin_13 | GPIO_Pin_14);
+#else
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_All & ~(GPIO_Pin_13 | GPIO_Pin_14);
+#endif
     GPIO_Init(GPIOA, &GPIO_InitStructure);
+
 
 #ifdef RCC_EN1_PORT
     en1 = digitalInit(RCC_EN1_PORT, RCC_EN1_PIN);
@@ -62,6 +67,10 @@ void rccConfiguration(void) {
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2 | RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM4, ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_TIM8 | RCC_APB2Periph_TIM9 | RCC_APB2Periph_TIM10 | RCC_APB2Periph_TIM11, ENABLE);
 
+    // Ben+
+    //RCC_APB1PeriphClockCmd( RCC_APB1Periph_SPI2, ENABLE );
+    RCC_APB2PeriphClockCmd( RCC_APB2Periph_SPI1, ENABLE );
+
     SYSCFG_CompensationCellCmd(ENABLE);
 
     // Clear reset flags
@@ -69,5 +78,8 @@ void rccConfiguration(void) {
 
     RCC_GetClocksFreq(&rccClocks);
 
+// Ben+
+#ifndef PX4FMU
     pwmZeroTimers();
+#endif
 }

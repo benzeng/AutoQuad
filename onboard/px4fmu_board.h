@@ -8,10 +8,16 @@
 #ifndef __PX4FMU_STM32F247_BOARD_H
 #define __PX4FMU_STM32F247_BOARD_H
 
+#define PX4FMU_LOWLEVEL
+
 
 /************************************************************************************
  * Definitions
  ************************************************************************************/
+ #undef ERROR
+ #undef OK
+ #define ERROR (-1)
+ #define OK (0)
 
 /* Clocking *************************************************************************/
 /* The PX4FMUV2 uses a 24MHz crystal connected to the HSE.
@@ -415,7 +421,25 @@ extern "C" {
 
 EXTERN void px4fmu_boardinitialize(void);
 
+unsigned int GetTimerMicros();
+#define up_udelay(n)		    CoTickDelay(n)
+extern OS_STK *aqStackInit(unsigned short size, char *name);
+void delay(unsigned long t);
 
+
+
+// first order filter
+typedef struct {
+    float tc;
+    float z1;
+} utilFilter_t;
+
+extern void utilFilterInit(utilFilter_t *f, float dt, float tau, float setpoint);
+extern void utilFilterInit3(utilFilter_t *f, float dt, float tau, float setpoint);
+extern float utilFilter(utilFilter_t *f, float signal);
+extern float utilFilter3(utilFilter_t *f, float signal);
+extern void utilFilterReset(utilFilter_t *f, float setpoint);
+extern void utilFilterReset3(utilFilter_t *f, float setpoint);
 
 
 

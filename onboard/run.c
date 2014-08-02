@@ -36,6 +36,8 @@
 #include <intrinsics.h>
 #endif
 
+#include "px4fmu_ms5611.h"
+
 OS_STK *runTaskStack;
 
 runStruct_t runData __attribute__((section(".ccm")));
@@ -181,7 +183,7 @@ void runInit(void) {
     runData.runFlag = CoCreateFlag(1, 0);	    // auto reset
     runTaskStack = aqStackInit(RUN_TASK_SIZE, "RUN");
 
-    runData.runTask = CoCreateTask(runTaskCode, (void *)0, RUN_PRIORITY, &runTaskStack[RUN_TASK_SIZE-1], RUN_TASK_SIZE);
+    //runData.runTask = CoCreateTask(runTaskCode, (void *)0, RUN_PRIORITY, &runTaskStack[RUN_TASK_SIZE-1], RUN_TASK_SIZE);
 
     acc[0] = IMU_ACCX;
     acc[1] = IMU_ACCY;

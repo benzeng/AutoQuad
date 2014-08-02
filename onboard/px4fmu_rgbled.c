@@ -5,13 +5,13 @@
 
     Copyright (C) 2014  BenZeng
 */
+#include "CoOS.h"
 #include "px4fmu_config.h"
 #include "px4fmu_board.h"
 #include "px4fmu_types.h"
 #include "px4fmu_i2c.h"
 #include "px4fmu_rgbled.h"
-#include "util.h"
-#include <CoOS.h>
+
 #include <string.h>
 #include <stdio.h>
 
@@ -436,7 +436,7 @@ void rgbledTaskCode()
     {
 	if(!rgbledData._should_run) {
 	    rgbledData._running = false;
-	    yield( 100 );
+	    CoTickDelay( 100 );
 	    continue;
 	}
 
@@ -485,7 +485,7 @@ void rgbledTaskCode()
 
 	rgbledData._counter++;
 
-	yield( rgbledData._led_interval );
+	CoTickDelay( rgbledData._led_interval );
     }
 }
 
@@ -499,6 +499,7 @@ bool  rgbledInit( void )
     rgbledData._retries = 0;
     rgbledData._dev = up_i2cinitialize(rgbledData._bus);
 
+   
     // call the probe function to check whether the device is present
     bool ret = RGBLED_probe();
     if (!ret) {
@@ -517,7 +518,7 @@ bool  rgbledInit( void )
     rgbled_pattern_t ledPattern = 
     {
 	{RGBLED_COLOR_RED, RGBLED_COLOR_YELLOW, RGBLED_COLOR_PURPLE, RGBLED_COLOR_GREEN, RGBLED_COLOR_BLUE, RGBLED_COLOR_DIM_AMBER, 0},
-	{500,              500,                 500,                 500,                500,               500,                    0}
+	{50,              50,                 50,                 50,                50,               50,                    0}
     };
     RGBLED_set_pattern( &ledPattern );
     RGBLED_set_mode(RGBLED_MODE_PATTERN);

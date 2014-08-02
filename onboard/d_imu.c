@@ -27,6 +27,11 @@
 #include "aq_init.h"
 #include "nav_ukf.h"
 
+#include "px4fmu_ms5611.h"
+//#include "px4fmu_l3gd20.h"
+uint8_t l3gd20Init(void);
+void l3gd20Decode(void);
+
 OS_STK *dIMUTaskStack;
 
 dImuStruct_t dImuData __attribute__((section(".ccm")));
@@ -208,6 +213,10 @@ static void dIMUTaskCode(void *unused) {
 	mpu6000DrateDecode();
 #endif
 
+#ifdef DIMU_HAVE_L3GD20
+    l3gd20DrateDecode();
+#endif
+
 	imuDImuDRateReady();
 
 	// full sensor loop
@@ -215,6 +224,12 @@ static void dIMUTaskCode(void *unused) {
 #ifdef DIMU_HAVE_MPU6000
 	    mpu6000Decode();
 #endif
+
+#ifdef DIMU_HAVE_L3GD20
+    l3gd20Decode();
+#endif
+
+
 #ifdef DIMU_HAVE_HMC5983
 	    hmc5983Decode();
 #endif
@@ -285,6 +300,8 @@ void dIMUInit(void) {
     TIM_OCInitTypeDef  TIM_OCInitStructure;
     NVIC_InitTypeDef NVIC_InitStructure;
 
+
+
 #ifdef DIMU_HAVE_MPU6000
     mpu6000PreInit();
 #endif
@@ -310,10 +327,20 @@ void dIMUInit(void) {
     if (hmc5983Init() == 0)
       AQ_NOTICE("DIMU: MAG sensor init failed!\n");
 #endif
+
 #ifdef DIMU_HAVE_MS5611
     if (ms5611Init() == 0)
       AQ_NOTICE("DIMU: PRES sensor init failed!\n");
 #endif
+
+#ifdef DIMU_HAVE_L3GD20
+    if( l3gd20Init() == 0 )
+	AQ_NOTICE("DIMU: L3GD20(GYO) sensor init failed!\n");
+#endif
+
+
+
+
     dIMUTaskStack = aqStackInit(DIMU_STACK_SIZE, "DIMU");
 
     dImuData.flag = CoCreateFlag(1, 0);
@@ -379,6 +406,10 @@ void dIMUInit(void) {
 #endif
 #ifdef DIMU_HAVE_MS5611
     ms5611InitialBias();
+#endif
+
+#ifdef DIMU_HAVE_L3GD20
+    l3gd20InitialBias();
 #endif
 }
 

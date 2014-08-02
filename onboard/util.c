@@ -248,3 +248,9 @@ int ftoa(char *buf, float f, unsigned int digits) {
 	return strlen(buf);
     }
 }
+
+
+uint32_t GetTimerMicros()
+{
+    return timerMicros();
+}

@@ -5,6 +5,7 @@
 
     Copyright (C) 2014  BenZeng
 */
+#include "CoOS.h"
 #include "px4fmu_config.h"
 #include "px4fmu_flash.h"
 #include "px4fmu_rcc.h"
@@ -13,10 +14,9 @@
 #include "px4fmu_types.h"
 #include "px4fmu_irq.h"
 #include "px4fmu_errno.h"
-#include "util.h"
-#include "CoOS.h"
+
 #include "px4fmu_i2c.h"
-#include "aq_timer.h"
+
 
 void modifyreg16(unsigned int addr, uint16_t clearbits, uint16_t setbits);
 void modifyreg32(unsigned int addr, uint32_t clearbits, uint32_t setbits);
@@ -604,8 +604,8 @@ static inline int stm32_i2c_sem_waitdone(FAR struct stm32_i2c_priv_s *priv, int 
      */
     
     priv->intstate = INTSTATE_WAITING;
-    start = timerMicros();//clock_systimer();
-    
+    start = GetTimerMicros();//clock_systimer();
+    //t = USEC2TICK(timeout_us);
     do
     {
         /* Poll by simply calling the timer interrupt handler until it
@@ -616,14 +616,14 @@ static inline int stm32_i2c_sem_waitdone(FAR struct stm32_i2c_priv_s *priv, int 
         
         /* Calculate the elapsed time */
         
-        elapsed = timerMicros() - start;
+        elapsed = GetTimerMicros() - start;
     }
     
     /* Loop until the transfer is complete. */
-    while (priv->intstate != INTSTATE_DONE && elapsed < USEC2TICK(timeout_us));
+    while (priv->intstate != INTSTATE_DONE && elapsed < 10000);
     
-    i2cvdbg("intstate: %d elapsed: %d threshold: %d status: %08x\n",
-            priv->intstate, elapsed, USEC2TICK(timeout_us), priv->status);
+    //i2cvdbg("intstate: %d elapsed: %d threshold: %d status: %08x\n",
+    //        priv->intstate, elapsed, USEC2TICK(timeout_us), priv->status);
     
     /* Set the interrupt state back to IDLE */
     
@@ -654,7 +654,7 @@ static inline void stm32_i2c_sem_waitstop(FAR struct stm32_i2c_priv_s *priv, int
      * detected, set by hardware when a timeout error is detected."
      */
     
-    start = timerMicros();//clock_systimer();
+    start = GetTimerMicros();//clock_systimer();
     do
     {
         /* Check for STOP condition */
@@ -675,7 +675,7 @@ static inline void stm32_i2c_sem_waitstop(FAR struct stm32_i2c_priv_s *priv, int
         
         /* Calculate the elapsed time */
         
-        elapsed = timerMicros() - start;
+        elapsed = GetTimerMicros() - start;
     }
     
     /* Loop until the stop is complete or a timeout occurs. */

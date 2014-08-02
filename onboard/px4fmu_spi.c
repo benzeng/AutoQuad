@@ -5,14 +5,15 @@
 
     Copyright (C) 2014  BenZeng
 */
+#include "CoOS.h"
 #include "px4fmu_config.h"
 #include "px4fmu_flash.h"
 #include "px4fmu_rcc.h"
 #include "px4fmu_pwr.h"
 #include "px4fmu_board.h"
 #include "px4fmu_types.h"
-#include "util.h"
-#include "CoOS.h"
+//#include "util.h"
+
 #include "px4fmu_spi.h"
 
 struct stm32_spidev_s
@@ -543,14 +544,15 @@ static void spi_setbits(FAR struct spi_dev_s *dev, int nbits)
 static uint16_t spi_send(FAR struct spi_dev_s *dev, uint16_t wd)
 {
   FAR struct stm32_spidev_s *priv = (FAR struct stm32_spidev_s *)dev;
-  uint32_t regval;
+  //uint32_t regval;
   uint16_t ret;
 
   spi_writeword(priv, wd);
   ret = spi_readword(priv);
 
   /* Check and clear any error flags (Reading from the SR clears the error flags) */
-  regval = spi_getreg(priv, STM32_SPI_SR_OFFSET);
+  //regval = spi_getreg(priv, STM32_SPI_SR_OFFSET);
+  spi_getreg(priv, STM32_SPI_SR_OFFSET);
 
   return ret;
 }

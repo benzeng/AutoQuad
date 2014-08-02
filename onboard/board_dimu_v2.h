@@ -31,13 +31,13 @@
 #define DIMU_HAVE_MS5611           // PRESSURE
 
 #define LSM303D_ACC_SCALE           8     // g      (2, 4, 8, 16)
-#define L3GD20_GYO_SCALE           1000  // deg/s  (250, 500, 1000, 2000)
+//#define L3GD20_GYO_SCALE           1000  // deg/s  (250, 500, 1000, 2000)
 
 #else
 
-#define DIMU_HAVE_MPU6000
-#define DIMU_HAVE_HMC5983
-#define DIMU_HAVE_MS5611
+#define DIMU_HAVE_MPU6000           // GYO & ACC
+#define DIMU_HAVE_HMC5983           // MAG
+#define DIMU_HAVE_MS5611            // PRESSURE
 
 #define MPU6000_ACC_SCALE           8     // g      (2, 4, 8, 16)
 #define MPU6000_GYO_SCALE           1000  // deg/s  (250, 500, 1000, 2000)

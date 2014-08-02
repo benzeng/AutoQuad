@@ -60,45 +60,42 @@ digitalPin *tp;
 
 OS_STK *aqInitStack;
 
-void aqInit(void *pdata) {
+void px4fmu_boardinitialize();
+
+void aqInit(void *pdata) 
+{
+
+#if 0 
 #ifdef EEPROM_CS_PORT
     // TODO: clean this up
     digitalPin *eepromCS = digitalInit(EEPROM_CS_PORT, EEPROM_CS_PIN);
     digitalHi(eepromCS);
 #endif
+
 #ifdef DAC_TP_PORT
     tp = digitalInit(DAC_TP_PORT, DAC_TP_PIN);
 #endif
-    rtcInit();	    // have to do this first as it requires our microsecond timer to calibrate
+#endif
+
+
+    rtcInit();      // have to do this first as it requires our microsecond timer to calibrate
     timerInit();    // now setup the microsecond timer before everything else
 
+    
 #ifdef PX4FMU
+    px4fmu_boardinitialize();
     rgbledInit();
 #endif
 
     sdioLowLevelInit();
-
-//void SD_SingleBlockTest(void);
-//    SD_SingleBlockTest(); 
-
-
     filerInit();
     supervisorInit();
     configInit();
-
     commInit();
 #ifdef USE_MAVLINK
     mavlinkInit();
 #endif
     telemetryInit();
-
-#if 0
-    extern void eepromTest( void );
-    eepromTest();
-#endif
-
-void TestMS5611( void );
-    TestMS5611();
 
     imuInit();    
 /*

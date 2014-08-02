@@ -461,7 +461,7 @@ ErrorStatus RTC_Init(RTC_InitTypeDef* RTC_InitStruct)
   /* Check the parameters */
   assert_param(IS_RTC_HOUR_FORMAT(RTC_InitStruct->RTC_HourFormat));
   assert_param(IS_RTC_ASYNCH_PREDIV(RTC_InitStruct->RTC_AsynchPrediv));
-  assert_param(IS_RTC_SYNCH_PREDIV(RTC_InitStruct->RTC_SynchPrediv));
+  //assert_param(IS_RTC_SYNCH_PREDIV(RTC_InitStruct->RTC_SynchPrediv));
 
   /* Disable the write protection for RTC registers */
   RTC->WPR = 0xCA;

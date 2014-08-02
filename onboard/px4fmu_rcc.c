@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 //#include "config.h"
-
+#include "CoOS.h"
 #include "px4fmu_config.h"
 #include "px4fmu_flash.h"
 #include "px4fmu_rcc.h"

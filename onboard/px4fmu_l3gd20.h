@@ -8,10 +8,6 @@
 #ifndef __PX4FMU_STM32F247_L3GD20_H
 #define __PX4FMU_STM32F247_L3GD20_H
 
-#include "px4fmu_types.h"
-#include "LowPassFilter.h"
-#include "util.h"
-#include <math.h>
 
 /* Orientation on board */
 #define SENSOR_BOARD_ROTATION_000_DEG	0
@@ -147,6 +143,7 @@ struct gyro_scale {
     float	z_offset;
     float	z_scale;
 };
+
 
 
 typedef struct {

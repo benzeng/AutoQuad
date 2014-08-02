@@ -30,6 +30,8 @@
 #include <intrinsics.h>
 #endif
 
+#include "px4fmu_ms5611.h"
+
 navUkfStruct_t navUkfData;
 
 #ifdef UKF_LOG_FNAME

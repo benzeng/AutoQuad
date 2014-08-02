@@ -720,7 +720,7 @@ static inline void putreg16(uint16_t val, unsigned int addr)
 static inline irqstate_t irqsave(void)
 {
   unsigned int flags;
-  unsigned int temp;
+  //unsigned int temp;
 /*
   __asm__ __volatile__
     (

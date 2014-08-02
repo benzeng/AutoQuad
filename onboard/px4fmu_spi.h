@@ -13,6 +13,9 @@
 #include "px4fmu_rcc.h"
 #include "px4fmu_gpio.h"
 
+#undef yield
+#define yield(n)		    CoTickDelay(n)
+
 // Setup SPI1,SPI2
 //#define CONFIG_STM32_SPI1
 //#define CONFIG_STM32_SPI2
@@ -79,6 +82,10 @@
 #define SPI_CR2_TXEIE             (1 << 7)  /* Bit 7: Tx buffer empty interrupt enable */
 #endif
 
+
+/* SPI status register */
+#define SPI_SR_RXNE               (1 << 0)  /* Bit 0: Receive buffer not empty */
+#define SPI_SR_TXE                (1 << 1)  /* Bit 1: Transmit buffer empty */
 
 /* Register Offsets *****************************************************************/
 #define STM32_SPI_CR1_OFFSET       0x0000  /* SPI Control Register 1 (16-bit) */

@@ -141,7 +141,11 @@ void TIMER_ISR(void) {
     // CC4 is used for RTC calibration at startup
     else if (TIM_GetITStatus(TIMER_TIM, TIM_IT_CC4) != RESET) {
 	// Get the Input Capture value
-	rtcData.captureLSI[rtcData.captureNumber++] = TIM_GetCapture4(TIM5);
+	if( rtcData.captureNumber < 2 )
+	    rtcData.captureLSI[rtcData.captureNumber] = TIM_GetCapture4(TIM5);
+
+	// Ben+
+        rtcData.captureNumber++;
 
 	// Clear CC4 Interrupt pending bit
 	TIM_ClearITPendingBit(TIM5, TIM_IT_CC4);

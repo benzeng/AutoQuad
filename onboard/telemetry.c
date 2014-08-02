@@ -38,6 +38,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "px4fmu_ms5611.h"
+
 telemetryStruct_t telemetryData __attribute__((section(".ccm")));
 
 static void telemtryChecksum(uint8_t c) {

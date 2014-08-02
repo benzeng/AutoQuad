@@ -19,15 +19,20 @@
 #ifndef _digital_imu_h
 #define _digital_imu_h
 
+#ifndef PX4FMU_LOWLEVEL
+
 #include "aq.h"
 #include "config.h"
 #include "rcc.h"
 #include <CoOS.h>
 
+
+
 #include "mpu6000.h"
 #include "eeprom.h"
 #include "hmc5983.h"
-#include "ms5611.h"
+
+#endif
 
 #define DIMU_STACK_SIZE	    250
 #define DIMU_PRIORITY	    11

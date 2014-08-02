@@ -67,6 +67,8 @@ struct baro_report {
 };
 
 #undef ms5611Struct_t
+#undef bool
+typedef uint8_t            bool;
 typedef struct {
 
     //

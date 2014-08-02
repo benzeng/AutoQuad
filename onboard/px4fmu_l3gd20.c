@@ -5,16 +5,17 @@
 
     Copyright (C) 2014  BenZeng
 */
+#include "CoOS.h"
 #include "px4fmu_config.h"
-#include "px4fmu_types.h"
-#include "util.h"
 #include "px4fmu_board.h"
+#include "px4fmu_types.h"
 #include "px4fmu_spi.h"
-#include "px4fmu_l3gd20.h"
 #include "px4fmu_rcc.h"
 #include "LowPassFilter.h"
-#include "CoOS.h"
-#include "aq_timer.h"
+#include "px4fmu_l3gd20.h"
+
+
+//#include "aq_timer.h"
 #include "d_imu.h"
 #include "imu.h"
 #include "config.h"
@@ -325,7 +326,7 @@ static void measure( SPI_INSTANCE_DATA *pThis )
 
     pL3GD20Data->_read++;    
     pL3GD20Data->slot = (pL3GD20Data->slot + 1) % L3GD20_SLOTS;
-    pL3GD20Data->_gyro_report[slot].timestamp = timerMicros();
+    pL3GD20Data->_gyro_report[slot].timestamp = GetTimerMicros();
 }
 
 
@@ -367,7 +368,7 @@ uint8_t l3gd20Init(void)
     l3gd20Data._orientation = SENSOR_BOARD_ROTATION_270_DEG;
     l3gd20Data._read = 0;
     /* convert hz to hrt interval via microseconds */
-    l3gd20Data._call_interval = 1000000 / L3GD20_DEFAULT_RATE;
+    l3gd20Data._call_interval = 10000 / L3GD20_DEFAULT_RATE;
 
     /* adjust filters */
     /*
@@ -528,5 +529,5 @@ void l3gd20Decode(void)
     l3gd20ScaleGyo(gyo, l3gd20Data.rawGyo, divisor);
     l3gd20CalibGyo(l3gd20Data.rawGyo, l3gd20Data.gyo);
 
-    l3gd20Data.lastUpdate = timerMicros();
+    l3gd20Data.lastUpdate = GetTimerMicros();
 }

@@ -38,6 +38,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "px4fmu_ms5611.h"
+
 loggerStruct_t loggerData __attribute__((section(".ccm")));
 
 loggerFields_t loggerFields[] = {

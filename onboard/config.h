@@ -19,6 +19,8 @@
 #ifndef _config_h
 #define _config_h
 
+#ifndef PX4FMU_LOWLEVEL
+
 #include "aq.h"
 
 #ifdef PX4FMU
@@ -33,6 +35,8 @@
 	#error "Unknown DIMU_VERSION for BOARD_VERSION == 6"
     #endif
 #endif
+#endif
+
 #endif
 
 #include "config_default.h"

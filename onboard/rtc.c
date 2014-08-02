@@ -140,11 +140,24 @@ void rtcInit(void) {
 
     memset((void *)&rtcData, 0, sizeof(rtcData));
 
+    // Ben+
+    RCC_DeInit();
+
     // Enable the PWR clock
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
 
     // Allow access to RTC
     PWR_BackupAccessCmd(ENABLE);
+
+#ifdef PX4FMU
+
+    RCC_HSEConfig( RCC_HSE_ON );
+    if( RCC_WaitForHSEStartUp() != SUCCESS )
+	return;
+    // Select the RTC Clock Source
+    RCC_RTCCLKConfig(RCC_RTCCLKSource_HSE_Div2);
+
+#else
 
     RCC_LSICmd(ENABLE);
 
@@ -155,10 +168,14 @@ void rtcInit(void) {
     // Select the RTC Clock Source
     RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
 
+#endif
+
+
     RCC_RTCCLKCmd(ENABLE);
 
     // Wait for RTC APB registers synchronization
     RTC_WaitForSynchro();
+
 
     // EXTI configuration
     EXTI_ClearITPendingBit(EXTI_Line22);
@@ -188,6 +205,7 @@ void rtcInit(void) {
     RTC_ClearITPendingBit(RTC_IT_WUT);
     RTC_ITConfig(RTC_IT_WUT, ENABLE);
 
+
     // TIM5 configuration: Input Capture mode
     // The LSI oscillator is connected to TIM5 CH4
     // The Rising edge is used as active edge,
@@ -195,10 +213,14 @@ void rtcInit(void) {
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
 
+#ifdef PX4FMU
+    TIM_RemapConfig(TIM5, TIM5_RTC);
+#else
     // Connect internally the TIM5_CH4 Input Capture to the LSI clock output
     TIM_RemapConfig(TIM5, TIM5_LSI);
+#endif
 
-    // Configure TIM5 presclaer
+     // Configure TIM5 presclaer
     TIM_PrescalerConfig(TIM5, 0, TIM_PSCReloadMode_Immediate);
 
     TIM_ICInitStructure.TIM_Channel = TIM_Channel_4;
@@ -207,6 +229,7 @@ void rtcInit(void) {
     TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV8;
     TIM_ICInitStructure.TIM_ICFilter = 0;
     TIM_ICInit(TIM5, &TIM_ICInitStructure);
+
 
     // Enable TIM5 Interrupt channel
     NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;

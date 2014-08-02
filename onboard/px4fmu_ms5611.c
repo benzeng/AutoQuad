@@ -5,16 +5,16 @@
 
     Copyright (C) 2014  BenZeng
 */
-
+#include "CoOS.h"
 #include "px4fmu_config.h"
 #include "px4fmu_types.h"
-#include "util.h"
+//#include "util.h"
 #include "px4fmu_board.h"
 #include "px4fmu_spi.h"
 #include "px4fmu_ms5611.h"
 #include "px4fmu_rcc.h"
-#include "CoOS.h"
-#include "aq_timer.h"
+
+//#include "aq_timer.h"
 #include <math.h>
 
 
@@ -130,7 +130,7 @@ bool ReadPROM( SPI_INSTANCE_DATA *pThis )
      * Wait for PROM contents to be in the device (2.8 ms) in the case we are
      * called immediately after reset.
      */
-    yield(1000);
+    yield(10);
 
     /* read and convert PROM words */
     bool all_zero = true;
@@ -281,7 +281,7 @@ static int collect( SPI_INSTANCE_DATA *pThis )
 	 */
 	pMS5611Data->brp.altitude = (((pow((p / p1), (-(a * R) / g))) * T1) - T1) / a;
 	pMS5611Data->_Alt = pMS5611Data->brp.altitude;
-        pMS5611Data->brp.timestamp = timerMicros();
+        pMS5611Data->brp.timestamp = GetTimerMicros();
     }
 
     /* update the measurement state machine */

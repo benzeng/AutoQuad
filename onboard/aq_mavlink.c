@@ -45,6 +45,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "px4fmu_ms5611.h"
+
 mavlinkStruct_t mavlinkData;
 mavlink_system_t mavlink_system;
 

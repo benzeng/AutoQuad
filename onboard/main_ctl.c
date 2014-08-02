@@ -27,22 +27,29 @@
 
 #include <CoOS.h>
 
+void px4fmu_boardinitialize(void);
+
 volatile unsigned long counter;
 volatile unsigned long minCycles = 0xFFFFFFFF;
 
+
+unsigned char  rgbledInit( void );
+void rgbledTaskCode();
+
 int main(void) {
+
     fpuInit();	    // setup FPU context switching
-
-    rccConfiguration();
-
+    
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+    rccConfiguration();
 
     CoInitOS();
 
     aqInitStack = aqStackInit(AQINIT_STACK_SIZE, "INIT");
-
     CoCreateTask(aqInit, (void *)0, AQINIT_PRIORITY, &aqInitStack[AQINIT_STACK_SIZE-1], AQINIT_STACK_SIZE);
+
     CoStartOS();
+
 
     return 0;
 }

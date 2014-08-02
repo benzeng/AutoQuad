@@ -5,10 +5,13 @@
 
     Copyright (C) 2014  BenZeng
 */
+#include "CoOS.h"
 #include "px4fmu_config.h"
 #include "px4fmu_types.h"
 #include "px4fmu_board.h"
 #include "px4fmu_gpio.h"
+
+
 
 /****************************************************************************
  * Private Types
@@ -372,7 +375,7 @@ int stm32_configgpio(uint32_t cfgset)
   unsigned int pin;
   unsigned int pos;
   unsigned int pinmode;
-  irqstate_t flags;
+  //irqstate_t flags;
 
   /* Verify that this hardware supports the select GPIO port */
 

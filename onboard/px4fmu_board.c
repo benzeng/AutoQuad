@@ -5,6 +5,7 @@
 
     Copyright (C) 2014  BenZeng
 */
+#include "CoOS.h"
 #include "px4fmu_config.h"
 #include "px4fmu_types.h"
 #include "px4fmu_board.h"
@@ -131,8 +132,8 @@ static inline void stm32_fpuconfig(void)
 
 void px4fmu_boardinitialize(void)
 {
-    stm32_clockconfig();
-    stm32_fpuconfig(); // Comment this line: Work for a while, but still HW fault finally.
+    //stm32_clockconfig();
+    //stm32_fpuconfig(); // Comment this line: Work for a while, but still HW fault finally.
 
     InitPx4fmuSPI();
 }

@@ -15,7 +15,6 @@
 
 #define CONFIG_I2C_POLLED
 
-#define up_udelay(t) yield(MSEC2TICK(t))
 
 /************************************************************************************
  * Pre-processor Definitions

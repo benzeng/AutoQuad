@@ -19,9 +19,13 @@
 #ifndef _imu_h
 #define _imu_h
 
+#ifndef PX4FMU_LOWLEVEL
+
 #include "aq.h"
 #include "adc.h"
 #include "d_imu.h"
+
+#endif
 
 #define IMU_ROOM_TEMP		20.0f
 #define IMU_STATIC_STD		0.05f
